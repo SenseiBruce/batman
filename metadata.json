@@ -1,0 +1,5 @@
+{
+  "name": "Jarvis Expense Tracker",
+  "description": "A privacy-focused, AI-powered expense tracker prototype. Features SMS-style parsing simulation, interactive dashboards, and a Jarvis conversational interface powered by Gemini.",
+  "requestFramePermissions": []
+}
