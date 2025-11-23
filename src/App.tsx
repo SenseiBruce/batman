@@ -3,6 +3,8 @@ import LockScreen from './components/LockScreen';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { BottomNav } from './components/BottomNav';
 import { Preferences } from '@capacitor/preferences';
+import { SecureStorageService } from './services/secureStorageService';
+import { AuthService } from './services/authService';
 import Home from './pages/Home';
 import Transactions from './pages/Transactions';
 import AddTransaction from './pages/AddTransaction';
@@ -16,25 +18,25 @@ const App: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
 
-  // Load persisted data using Capacitor Preferences on mount
+  // Load persisted data using Secure Storage on mount
   useEffect(() => {
     const loadData = async () => {
-      // Transactions
-      const { value: txValue } = await Preferences.get({ key: 'transactions' });
-      if (txValue) {
-        try {
-          setTransactions(JSON.parse(txValue));
-        } catch (e) {
-          console.error('Failed to parse transactions', e);
+      try {
+        // Check if user is authenticated before loading encrypted data
+        if (!AuthService.isAuth()) {
+          return; // Data will be loaded after authentication
         }
-      }
-      // No dummy data - start fresh
 
-      // Categories
-      const { value: catValue } = await Preferences.get({ key: 'categories' });
-      if (catValue) {
-        try {
-          let loadedCats: Category[] = JSON.parse(catValue);
+        // Transactions
+        const txData = await SecureStorageService.get<Transaction[]>('transactions');
+        if (txData) {
+          setTransactions(txData);
+        }
+
+        // Categories
+        const catData = await SecureStorageService.get<Category[]>('categories');
+        if (catData) {
+          let loadedCats = catData;
 
           // Migration: Ensure 'Investments' exists
           if (!loadedCats.some(c => c.name === 'Investments')) {
@@ -42,33 +44,53 @@ const App: React.FC = () => {
             if (investmentsCat) {
               loadedCats = [...loadedCats, investmentsCat];
               // Save immediately
-              Preferences.set({ key: 'categories', value: JSON.stringify(loadedCats) });
+              await SecureStorageService.set('categories', loadedCats);
             }
           }
 
           setCategories(loadedCats);
-        } catch (e) {
-          console.error('Failed to parse categories', e);
         }
+      } catch (e) {
+        console.error('Failed to load data:', e);
       }
     };
     loadData();
   }, []);
 
-  // Persist data to Capacitor Preferences on change
+  // Persist data to Secure Storage on change
   useEffect(() => {
-    Preferences.set({ key: 'transactions', value: JSON.stringify(transactions) });
+    const saveData = async () => {
+      try {
+        if (AuthService.isAuth()) {
+          await SecureStorageService.set('transactions', transactions);
+        }
+      } catch (e) {
+        console.error('Failed to save transactions:', e);
+      }
+    };
+    saveData();
   }, [transactions]);
 
   useEffect(() => {
-    Preferences.set({ key: 'categories', value: JSON.stringify(categories) });
+    const saveData = async () => {
+      try {
+        if (AuthService.isAuth()) {
+          await SecureStorageService.set('categories', categories);
+        }
+      } catch (e) {
+        console.error('Failed to save categories:', e);
+      }
+    };
+    saveData();
   }, [categories]);
 
   const addTransaction = (t: Transaction) => {
     setTransactions(prev => {
       const updated = [t, ...prev];
       // Save immediately
-      Preferences.set({ key: 'transactions', value: JSON.stringify(updated) });
+      SecureStorageService.set('transactions', updated).catch(e =>
+        console.error('Failed to save transaction:', e)
+      );
       return updated;
     });
 
@@ -82,7 +104,9 @@ const App: React.FC = () => {
           }
           return c;
         });
-        Preferences.set({ key: 'categories', value: JSON.stringify(updatedCats) });
+        SecureStorageService.set('categories', updatedCats).catch(e =>
+          console.error('Failed to save categories:', e)
+        );
         return updatedCats;
       });
     }
@@ -96,7 +120,9 @@ const App: React.FC = () => {
       if (uniqueNewTxs.length === 0) return prev;
 
       const updated = [...uniqueNewTxs, ...prev];
-      Preferences.set({ key: 'transactions', value: JSON.stringify(updated) });
+      SecureStorageService.set('transactions', updated).catch(e =>
+        console.error('Failed to save transactions:', e)
+      );
 
       // Update categories only for NEW transactions
       updateCategoriesFromTransactions(uniqueNewTxs);
@@ -119,7 +145,9 @@ const App: React.FC = () => {
         }
         return c;
       });
-      Preferences.set({ key: 'categories', value: JSON.stringify(updatedCats) });
+      SecureStorageService.set('categories', updatedCats).catch(e =>
+        console.error('Failed to save categories:', e)
+      );
       return updatedCats;
     });
   };
@@ -135,19 +163,25 @@ const App: React.FC = () => {
   const updateTransaction = (updatedTx: Transaction) => {
     setTransactions(prev => {
       const updated = prev.map(t => t.id === updatedTx.id ? updatedTx : t);
-      Preferences.set({ key: 'transactions', value: JSON.stringify(updated) });
+      SecureStorageService.set('transactions', updated).catch(e =>
+        console.error('Failed to save transactions:', e)
+      );
       return updated;
     });
   };
 
   const clearTransactions = () => {
     setTransactions([]);
-    Preferences.remove({ key: 'transactions' });
+    SecureStorageService.remove('transactions').catch(e =>
+      console.error('Failed to remove transactions:', e)
+    );
 
     // Reset spent amounts in categories
     setCategories(prev => {
       const resetCats = prev.map(c => ({ ...c, spent: 0 }));
-      Preferences.set({ key: 'categories', value: JSON.stringify(resetCats) });
+      SecureStorageService.set('categories', resetCats).catch(e =>
+        console.error('Failed to save categories:', e)
+      );
       return resetCats;
     });
   };
@@ -163,7 +197,9 @@ const App: React.FC = () => {
     };
     setCategories(prev => {
       const updated = [...prev, newCategory];
-      Preferences.set({ key: 'categories', value: JSON.stringify(updated) });
+      SecureStorageService.set('categories', updated).catch(e =>
+        console.error('Failed to save categories:', e)
+      );
       return updated;
     });
   };
@@ -185,7 +221,9 @@ const App: React.FC = () => {
         return { ...tx, category: newCategory };
       });
 
-      Preferences.set({ key: 'transactions', value: JSON.stringify(reparsed) });
+      SecureStorageService.set('transactions', reparsed).catch(e =>
+        console.error('Failed to save transactions:', e)
+      );
       return reparsed;
     });
 

@@ -2,6 +2,10 @@ import * as XLSX from 'xlsx';
 import { Transaction } from '../types';
 import { CATEGORY_KEYWORDS } from '../constants';
 
+/**
+ * Parse bank statement file and extract transactions
+ * File data is processed in memory and cleared after parsing for security
+ */
 export const parseStatement = async (file: File): Promise<Transaction[]> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
