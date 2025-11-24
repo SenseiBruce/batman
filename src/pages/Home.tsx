@@ -6,15 +6,17 @@ import { Link } from 'react-router-dom';
 interface HomeProps {
   transactions: Transaction[];
   categories: Category[];
+  selectedMonth: string; // YYYY-MM
+  onMonthChange: (month: string) => void;
 }
 
-const Home: React.FC<HomeProps> = ({ transactions, categories }) => {
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
+const Home: React.FC<HomeProps> = ({ transactions, categories, selectedMonth, onMonthChange }) => {
+  // Parse selected month
+  const [year, month] = selectedMonth.split('-').map(Number);
 
   const monthlyTransactions = transactions.filter(t => {
     const d = new Date(t.date);
-    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    return d.toISOString().slice(0, 7) === selectedMonth;
   });
 
   const totalSpent = monthlyTransactions
@@ -25,7 +27,7 @@ const Home: React.FC<HomeProps> = ({ transactions, categories }) => {
   const budgetLeft = totalBudget - totalSpent;
   const budgetProgress = Math.min((totalSpent / totalBudget) * 100, 100);
 
-  // Calculate Alerts
+  // Calculate Alerts for selected month
   const activeAlerts = categories
     .filter(c => c.alertsEnabled !== false)
     .map(c => {
@@ -70,14 +72,42 @@ const Home: React.FC<HomeProps> = ({ transactions, categories }) => {
 
   return (
     <div className="pb-24 pt-6 px-4 max-w-md mx-auto min-h-screen">
-      <header className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Overview</h1>
-          <p className="text-gray-400 text-sm">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+      <header className="mb-6">
+        <div className="flex justify-between items-center mb-3">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Overview</h1>
+          </div>
+          <Link to="/settings" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 hover:bg-gray-700 transition-colors text-gray-300">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+          </Link>
         </div>
-        <Link to="/settings" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 hover:bg-gray-700 transition-colors text-gray-300">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
-        </Link>
+
+        {/* Month Selector */}
+        <div className="flex items-center justify-between bg-gray-800 p-2 rounded-lg border border-gray-700">
+          <button
+            onClick={() => {
+              const date = new Date(selectedMonth + '-01');
+              date.setMonth(date.getMonth() - 1);
+              onMonthChange(date.toISOString().slice(0, 7));
+            }}
+            className="p-2 hover:bg-gray-700 rounded-full transition-colors"
+          >
+            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <span className="font-medium text-white">
+            {new Date(selectedMonth + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+          </span>
+          <button
+            onClick={() => {
+              const date = new Date(selectedMonth + '-01');
+              date.setMonth(date.getMonth() + 1);
+              onMonthChange(date.toISOString().slice(0, 7));
+            }}
+            className="p-2 hover:bg-gray-700 rounded-full transition-colors"
+          >
+            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          </button>
+        </div>
       </header>
 
       {/* Notifications Area */}
@@ -86,10 +116,10 @@ const Home: React.FC<HomeProps> = ({ transactions, categories }) => {
           {activeAlerts.map(c => (
             <Link to="/budgets" key={c.id} className="block">
               <div className={`rounded-xl p-3 border flex items-start gap-3 shadow-sm transition-transform active:scale-95 ${c.percentage >= 100
-                  ? 'bg-red-900/20 border-red-500/30 text-red-200'
-                  : c.percentage >= 90
-                    ? 'bg-orange-900/20 border-orange-500/30 text-orange-200'
-                    : 'bg-yellow-900/20 border-yellow-500/30 text-yellow-200'
+                ? 'bg-red-900/20 border-red-500/30 text-red-200'
+                : c.percentage >= 90
+                  ? 'bg-orange-900/20 border-orange-500/30 text-orange-200'
+                  : 'bg-yellow-900/20 border-yellow-500/30 text-yellow-200'
                 }`}>
                 <div className="mt-0.5">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>

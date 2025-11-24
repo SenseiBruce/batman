@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Preferences } from '@capacitor/preferences';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { AuthService } from '../services/authService';
-import { Lock, Shield, Key } from 'lucide-react';
+import { exportSmsDebugData } from '../services/smsService';
+import { SecureStorageService } from '../services/secureStorageService';
+import { Lock, Shield, Key, Bot } from 'lucide-react';
 
 interface SettingsProps {
   onClearTransactions?: () => void;
@@ -11,19 +15,37 @@ interface SettingsProps {
 const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
   const navigate = useNavigate();
   const [showChangePinModal, setShowChangePinModal] = useState(false);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [oldPin, setOldPin] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmNewPin, setConfirmNewPin] = useState('');
+  const [apiKey, setApiKey] = useState('');
   const [error, setError] = useState('');
   const [hasBiometric, setHasBiometric] = useState(false);
 
   useEffect(() => {
     checkBiometric();
+    loadApiKey();
   }, []);
 
   const checkBiometric = async () => {
     const state = await AuthService.getAuthState();
     setHasBiometric(state.hasBiometric);
+  };
+
+  const loadApiKey = async () => {
+    const key = await SecureStorageService.get<string>('gemini_api_key');
+    if (key) setApiKey(key);
+  };
+
+  const handleSaveApiKey = async () => {
+    if (apiKey.trim()) {
+      await SecureStorageService.set('gemini_api_key', apiKey);
+      // Keep in localStorage for compatibility
+      localStorage.setItem('gemini_api_key', apiKey);
+      setShowApiKeyModal(false);
+      alert('API Key saved successfully!');
+    }
   };
 
   const handleClearData = async () => {
@@ -71,6 +93,37 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
     }
   };
 
+  const handleExportDebugData = async () => {
+    try {
+      const jsonData = await exportSmsDebugData();
+
+      const fileName = `sms-debug-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+
+      // Save to Downloads folder
+      const result = await Filesystem.writeFile({
+        path: fileName,
+        data: jsonData,
+        directory: Directory.Documents,
+        encoding: Encoding.UTF8
+      });
+
+      console.log('✅ Debug file saved:', result.uri);
+
+      // Share the file
+      await Share.share({
+        title: 'SMS Debug Data',
+        text: `SMS Debug Export\nTotal Messages: Check the file\nExported: ${new Date().toLocaleString()}`,
+        url: result.uri,
+        dialogTitle: 'Share SMS Debug Data'
+      });
+
+      alert(`Debug data exported successfully!\nFile: ${fileName}\nSaved to Documents folder`);
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Failed to export debug data. Check console for details.');
+    }
+  };
+
   return (
     <div className="pb-24 pt-6 px-4 max-w-md mx-auto min-h-screen">
       <header className="mb-6 flex items-center gap-2">
@@ -81,6 +134,21 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
       </header>
 
       <div className="space-y-4">
+        {/* AI Settings Section */}
+        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+          <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+            <Bot className="w-5 h-5 text-blue-400" />
+            AI Settings
+          </h3>
+          <button
+            className="w-full text-left py-3 px-2 text-blue-400 hover:bg-gray-700/50 rounded transition-colors flex items-center gap-2"
+            onClick={() => setShowApiKeyModal(true)}
+          >
+            <Key className="w-4 h-4" />
+            {apiKey ? 'Update Gemini API Key' : 'Set Gemini API Key'}
+          </button>
+        </div>
+
         {/* Security Section */}
         <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
           <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
@@ -132,6 +200,16 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
           <h3 className="text-white font-semibold mb-2">Data Management</h3>
 
           <button
+            className="w-full text-left py-3 px-2 text-blue-400 hover:bg-gray-700/50 rounded transition-colors flex items-center gap-2"
+            onClick={handleExportDebugData}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+            Export Debug Data (SMS + Parsed)
+          </button>
+
+          <div className="h-px bg-gray-700 my-1"></div>
+
+          <button
             className="w-full text-left py-3 px-2 text-yellow-400 hover:bg-gray-700/50 rounded transition-colors flex items-center gap-2"
             onClick={handleClearTransactions}
           >
@@ -161,6 +239,42 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
           </p>
         </div>
       </div>
+
+      {/* API Key Modal */}
+      {showApiKeyModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-800 rounded-xl p-6 max-w-sm w-full border border-gray-700">
+            <h2 className="text-xl font-bold text-white mb-4">Gemini API Key</h2>
+            <p className="text-sm text-gray-400 mb-4">
+              Enter your Google Gemini API key to enable AI categorization and Jarvis chat features.
+            </p>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="AIzaSy..."
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowApiKeyModal(false)}
+                className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveApiKey}
+                className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+              >
+                Save
+              </button>
+            </div>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-xs text-blue-400 mt-4 inline-block hover:underline text-center w-full">
+              Get a free API Key
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* Change PIN Modal */}
       {showChangePinModal && (

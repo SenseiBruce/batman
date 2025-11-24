@@ -21,10 +21,21 @@ const LockScreen: React.FC<LockScreenProps> = ({ children }) => {
         checkAuthState();
 
         // Listen for app state changes (background/foreground)
+        let lockTimeout: NodeJS.Timeout | null = null;
+
         const handleVisibilityChange = () => {
             if (document.hidden) {
-                // App going to background - lock it
-                handleLock();
+                // App going to background - lock it after 3 seconds
+                // This prevents file picker from immediately locking the app
+                lockTimeout = setTimeout(() => {
+                    handleLock();
+                }, 3000);
+            } else {
+                // App came back to foreground - cancel pending lock
+                if (lockTimeout) {
+                    clearTimeout(lockTimeout);
+                    lockTimeout = null;
+                }
             }
         };
 
@@ -32,6 +43,9 @@ const LockScreen: React.FC<LockScreenProps> = ({ children }) => {
 
         return () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
+            if (lockTimeout) {
+                clearTimeout(lockTimeout);
+            }
         };
     }, []);
 

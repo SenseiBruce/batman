@@ -18,7 +18,6 @@ export interface Category {
   icon: string;
   budget: number;
   alertsEnabled?: boolean;
-  spent: number;
 }
 
 export interface BudgetStatus {

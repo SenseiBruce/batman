@@ -8,16 +8,17 @@ import html2canvas from 'html2canvas';
 interface BudgetsProps {
   transactions: Transaction[];
   categories: Category[];
+  selectedMonth: string; // YYYY-MM
+  onMonthChange: (month: string) => void;
   onUpdateCategory: (category: Category) => void;
   onAddCategory: (name: string, budget: number) => void;
   onUpdateTransaction?: (transaction: Transaction) => void;
 }
 
-const Budgets: React.FC<BudgetsProps> = ({ transactions, categories, onUpdateCategory, onAddCategory, onUpdateTransaction }) => {
+const Budgets: React.FC<BudgetsProps> = ({ transactions, categories, selectedMonth, onMonthChange, onUpdateCategory, onAddCategory, onUpdateTransaction }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState('');
   const [editAlerts, setEditAlerts] = useState(true);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [isSharing, setIsSharing] = useState(false);
 
   // Add Category State
@@ -49,7 +50,6 @@ const Budgets: React.FC<BudgetsProps> = ({ transactions, categories, onUpdateCat
   const [editingCategory, setEditingCategory] = useState('');
 
   const contentRef = useRef<HTMLDivElement>(null);
-  const monthInputRef = useRef<HTMLInputElement>(null);
 
   // Request push permission on mount and register listeners
   useEffect(() => {
@@ -151,48 +151,60 @@ const Budgets: React.FC<BudgetsProps> = ({ transactions, categories, onUpdateCat
 
   return (
     <div ref={contentRef} className="pb-24 pt-6 px-4 max-w-md mx-auto min-h-screen bg-gray-900 relative">
-      <header className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Budgets</h1>
-          <p className="text-gray-400 text-sm mt-1">
-            {formatMonth(selectedMonth)}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3 no-capture">
-          {/* Add Category Button */}
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          </button>
-
-          {/* Hidden Month Input */}
-          <div className="relative">
-            <input
-              type="month"
-              ref={monthInputRef}
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-            />
-            <button className="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /><path d="M8 14h.01" /><path d="M12 14h.01" /><path d="M16 14h.01" /><path d="M8 18h.01" /><path d="M12 18h.01" /><path d="M16 18h.01" /></svg>
-            </button>
+      <header className="mb-6">
+        <div className="flex justify-between items-center mb-3">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Budgets</h1>
           </div>
 
-          {/* Share/Save Button */}
+          <div className="flex items-center gap-3 no-capture">
+            {/* Add Category Button */}
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+
+            {/* Share/Save Button */}
+            <button
+              onClick={handleShare}
+              disabled={isSharing}
+              className="p-2 bg-blue-600 rounded-full text-white hover:bg-blue-500 transition-colors shadow-lg"
+            >
+              {isSharing ? (
+                <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Month Selector */}
+        <div className="flex items-center justify-between bg-gray-800 p-2 rounded-lg border border-gray-700">
           <button
-            onClick={handleShare}
-            disabled={isSharing}
-            className="p-2 bg-blue-600 rounded-full text-white hover:bg-blue-500 transition-colors shadow-lg"
+            onClick={() => {
+              const date = new Date(selectedMonth + '-01');
+              date.setMonth(date.getMonth() - 1);
+              onMonthChange(date.toISOString().slice(0, 7));
+            }}
+            className="p-2 hover:bg-gray-700 rounded-full transition-colors"
           >
-            {isSharing ? (
-              <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-            )}
+            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <span className="font-medium text-white">
+            {formatMonth(selectedMonth)}
+          </span>
+          <button
+            onClick={() => {
+              const date = new Date(selectedMonth + '-01');
+              date.setMonth(date.getMonth() + 1);
+              onMonthChange(date.toISOString().slice(0, 7));
+            }}
+            className="p-2 hover:bg-gray-700 rounded-full transition-colors"
+          >
+            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
           </button>
         </div>
       </header>

@@ -93,12 +93,11 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [transactions, filter, categoryFilter, merchantSearch, selectedMonth]);
 
-  const totalIncome = filteredTransactions
-    .filter(t => t.type === 'credit')
-    .reduce((acc, t) => acc + t.amount, 0);
-
-  const totalExpense = filteredTransactions
-    .filter(t => t.type === 'debit')
+  const totalExpense = transactions
+    .filter(t => {
+      const d = new Date(t.date);
+      return d.toISOString().slice(0, 7) === selectedMonth && t.type === 'debit';
+    })
     .reduce((acc, t) => acc + t.amount, 0);
 
   // Calculate Budget Summary for the selected month
@@ -247,14 +246,10 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
         </div>
       )}
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      {/* Summary Card */}
+      <div className="mb-6">
         <div className="bg-gray-800 p-4 rounded-xl border border-gray-700">
-          <p className="text-gray-400 text-xs mb-1">Income</p>
-          <p className="text-green-400 text-lg font-bold">+₹{totalIncome.toLocaleString()}</p>
-        </div>
-        <div className="bg-gray-800 p-4 rounded-xl border border-gray-700">
-          <p className="text-gray-400 text-xs mb-1">Expense</p>
+          <p className="text-gray-400 text-xs mb-1">Total Expense</p>
           <p className="text-red-400 text-lg font-bold">-₹{totalExpense.toLocaleString()}</p>
         </div>
       </div>

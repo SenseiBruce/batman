@@ -21,6 +21,7 @@
     "@capacitor/share": "^6.0.3",
     "@capacitor/splash-screen": "^6.0.0",
     "@google/genai": "^1.30.0",
+    "@google/generative-ai": "^0.24.1",
     "@solimanware/capacitor-sms-reader": "^5.0.3",
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.344.0",

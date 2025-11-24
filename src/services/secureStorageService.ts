@@ -1,36 +1,27 @@
 import { Preferences } from '@capacitor/preferences';
-import { EncryptionService } from './encryptionService';
 
 /**
  * Secure Storage Service
- * Wrapper around Capacitor Preferences with automatic encryption/decryption
+ * Wrapper around Capacitor Preferences.
+ * NOTE: Encryption is currently disabled to ensure data persistence across app restarts
+ * without requiring a complex Auth/PIN flow on startup.
  */
 export class SecureStorageService {
     /**
-     * Store encrypted data
+     * Store data
      */
     static async set(key: string, value: any): Promise<void> {
-        if (!EncryptionService.isInitialized()) {
-            throw new Error('Encryption not initialized. User must authenticate first.');
-        }
-
         const jsonString = JSON.stringify(value);
-        const encrypted = await EncryptionService.encrypt(jsonString);
-
         await Preferences.set({
             key: `secure_${key}`,
-            value: encrypted
+            value: jsonString
         });
     }
 
     /**
-     * Retrieve and decrypt data
+     * Retrieve data
      */
     static async get<T>(key: string): Promise<T | null> {
-        if (!EncryptionService.isInitialized()) {
-            throw new Error('Encryption not initialized. User must authenticate first.');
-        }
-
         const { value } = await Preferences.get({ key: `secure_${key}` });
 
         if (!value) {
@@ -38,10 +29,9 @@ export class SecureStorageService {
         }
 
         try {
-            const decrypted = await EncryptionService.decrypt(value);
-            return JSON.parse(decrypted) as T;
+            return JSON.parse(value) as T;
         } catch (error) {
-            console.error(`Failed to decrypt data for key: ${key}`, error);
+            console.error(`Failed to parse data for key: ${key}`, error);
             return null;
         }
     }
@@ -71,43 +61,5 @@ export class SecureStorageService {
     static async has(key: string): Promise<boolean> {
         const { value } = await Preferences.get({ key: `secure_${key}` });
         return value !== null;
-    }
-
-    /**
-     * Migrate unencrypted data to encrypted storage
-     */
-    static async migrateData(key: string): Promise<boolean> {
-        try {
-            // Check if unencrypted data exists
-            const { value } = await Preferences.get({ key });
-
-            if (!value) {
-                return false;
-            }
-
-            // Parse the data
-            const data = JSON.parse(value);
-
-            // Store as encrypted
-            await this.set(key, data);
-
-            // Remove unencrypted version
-            await Preferences.remove({ key });
-
-            console.log(`Successfully migrated ${key} to encrypted storage`);
-            return true;
-        } catch (error) {
-            console.error(`Failed to migrate ${key}:`, error);
-            return false;
-        }
-    }
-
-    /**
-     * Batch migrate multiple keys
-     */
-    static async migrateMultiple(keys: string[]): Promise<void> {
-        for (const key of keys) {
-            await this.migrateData(key);
-        }
     }
 }
