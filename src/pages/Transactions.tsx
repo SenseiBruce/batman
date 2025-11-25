@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { Transaction, Category } from '../types';
 import { fetchAllSmsTransactions } from '../services/smsService';
 import { parseStatement } from '../services/statementService';
+import SearchFilter, { FilterState } from '../components/SearchFilter';
 
 interface TransactionsProps {
   transactions: Transaction[];
@@ -12,13 +13,17 @@ interface TransactionsProps {
 }
 
 const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, onDelete, onAdd, onBulkAdd }) => {
-  const [filter, setFilter] = useState('all');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [merchantSearch, setMerchantSearch] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState<FilterState>({
+    category: '',
+    dateFrom: '',
+    dateTo: '',
+    amountMin: '',
+    amountMax: ''
+  });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -80,18 +85,35 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
-      const matchesType = filter === 'all' || t.type === filter;
-      const matchesCategory = categoryFilter === 'all' || t.category === categoryFilter;
-      const matchesMerchant = t.merchant.toLowerCase().includes(merchantSearch.toLowerCase());
+      // Search by merchant
+      const matchesMerchant = t.merchant.toLowerCase().includes(searchQuery.toLowerCase());
 
-      // Month Filter
-      const tDate = new Date(t.date);
-      const tMonth = tDate.toISOString().slice(0, 7);
-      const matchesMonth = tMonth === selectedMonth;
+      // Filter by category
+      const matchesCategory = !filters.category || t.category === filters.category;
 
-      return matchesType && matchesCategory && matchesMerchant && matchesMonth;
+      // Filter by date range (if filters are set, use them; otherwise use selectedMonth)
+      let matchesDate = true;
+      if (filters.dateFrom || filters.dateTo) {
+        const tDate = new Date(t.date);
+        if (filters.dateFrom) {
+          matchesDate = matchesDate && tDate >= new Date(filters.dateFrom);
+        }
+        if (filters.dateTo) {
+          matchesDate = matchesDate && tDate <= new Date(filters.dateTo + 'T23:59:59');
+        }
+      } else {
+        // Default month filter
+        const tMonth = new Date(t.date).toISOString().slice(0, 7);
+        matchesDate = tMonth === selectedMonth;
+      }
+
+      // Filter by amount range
+      const matchesAmount = (!filters.amountMin || t.amount >= parseFloat(filters.amountMin)) &&
+        (!filters.amountMax || t.amount <= parseFloat(filters.amountMax));
+
+      return matchesMerchant && matchesCategory && matchesDate && matchesAmount;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [transactions, filter, categoryFilter, merchantSearch, selectedMonth]);
+  }, [transactions, searchQuery, filters, selectedMonth]);
 
   const totalExpense = transactions
     .filter(t => {
@@ -180,59 +202,13 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
         </button>
       </div>
 
-      {/* Filters Toggle */}
-      <div className="mb-4">
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
-          {showFilters ? 'Hide Filters' : 'Show Filters'}
-        </button>
-
-        {showFilters && (
-          <div className="mt-3 p-3 bg-gray-800 rounded-xl border border-gray-700 space-y-3 animate-in fade-in slide-in-from-top-2">
-            {/* Search */}
-            <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input
-                type="text"
-                placeholder="Search merchant..."
-                value={merchantSearch}
-                onChange={(e) => setMerchantSearch(e.target.value)}
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {/* Type Filter */}
-              <div className="flex bg-gray-900 rounded-lg p-1 border border-gray-700">
-                {(['all', 'debit', 'credit'] as const).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setFilter(t)}
-                    className={`px-3 py-1 rounded-md text-xs font-medium capitalize transition-colors ${filter === t ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-gray-300'}`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-
-              {/* Category Filter */}
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="bg-gray-900 border border-gray-700 rounded-lg px-3 py-1 text-xs text-white focus:outline-none focus:border-blue-500"
-              >
-                <option value="all">All Categories</option>
-                {categories.map(c => (
-                  <option key={c.id} value={c.name}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Search & Filter Component */}
+      <SearchFilter
+        onSearchChange={setSearchQuery}
+        onFilterChange={setFilters}
+        categories={categories}
+        currentFilters={filters}
+      />
 
       {/* Sync Status Message */}
       {syncStatus && (

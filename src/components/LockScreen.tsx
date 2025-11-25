@@ -87,9 +87,6 @@ const LockScreen: React.FC<LockScreenProps> = ({ children }) => {
         try {
             await AuthService.setupPin(pin);
 
-            // Migrate existing data to encrypted storage
-            await SecureStorageService.migrateMultiple(['transactions', 'categories']);
-
             setIsSetup(true);
             setIsAuthenticated(true);
             setIsSetupMode(false);

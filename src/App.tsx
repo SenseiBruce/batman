@@ -13,10 +13,12 @@ import { Transaction, Category } from './types';
 import { DEFAULT_CATEGORIES, CATEGORY_KEYWORDS } from './constants';
 import { fetchAllSmsTransactions } from './services/smsService';
 
+
 const App: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // YYYY-MM format
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   // Load persisted data using Secure Storage on mount
   useEffect(() => {
@@ -31,7 +33,7 @@ const App: React.FC = () => {
 
         // Categories
         const catData = await SecureStorageService.get<any[]>('categories');
-        if (catData) {
+        if (catData && catData.length > 0) {
           let loadedCats = catData;
 
           // Migration: Remove 'spent' field from old data (we now calculate dynamically)
@@ -48,9 +50,18 @@ const App: React.FC = () => {
           }
 
           setCategories(loadedCats as Category[]);
+        } else {
+          // No saved categories, use defaults
+          setCategories(DEFAULT_CATEGORIES);
+          await SecureStorageService.set('categories', DEFAULT_CATEGORIES);
         }
+
+        setIsDataLoaded(true);
       } catch (e) {
         console.error('Failed to load data:', e);
+        // On error, use defaults
+        setCategories(DEFAULT_CATEGORIES);
+        setIsDataLoaded(true);
       }
     };
     loadData();
@@ -58,6 +69,8 @@ const App: React.FC = () => {
 
   // Persist data to Secure Storage on change
   useEffect(() => {
+    if (!isDataLoaded) return; // Don't save until initial data is loaded
+
     const saveData = async () => {
       try {
         await SecureStorageService.set('transactions', transactions);
@@ -66,9 +79,11 @@ const App: React.FC = () => {
       }
     };
     saveData();
-  }, [transactions]);
+  }, [transactions, isDataLoaded]);
 
   useEffect(() => {
+    if (!isDataLoaded) return; // Don't save until initial data is loaded
+
     const saveData = async () => {
       try {
         await SecureStorageService.set('categories', categories);
@@ -77,7 +92,7 @@ const App: React.FC = () => {
       }
     };
     saveData();
-  }, [categories]);
+  }, [categories, isDataLoaded]);
 
   // Auto-sync SMS transactions on app startup
   useEffect(() => {
@@ -222,7 +237,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={
             <>
-              <Home transactions={transactions} categories={categories} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
+              <Budgets transactions={transactions} categories={categories} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} onUpdateCategory={updateCategory} onAddCategory={addCategory} onUpdateTransaction={updateTransaction} />
               <BottomNav />
             </>
           } />
@@ -239,9 +254,9 @@ const App: React.FC = () => {
               <BottomNav />
             </>
           } />
-          <Route path="/budgets" element={
+          <Route path="/overview" element={
             <>
-              <Budgets transactions={transactions} categories={categories} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} onUpdateCategory={updateCategory} onAddCategory={addCategory} onUpdateTransaction={updateTransaction} />
+              <Home transactions={transactions} categories={categories} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
               <BottomNav />
             </>
           } />

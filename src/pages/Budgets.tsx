@@ -48,6 +48,7 @@ const Budgets: React.FC<BudgetsProps> = ({ transactions, categories, selectedMon
   // State for editing transactions
   const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
   const [editingCategory, setEditingCategory] = useState('');
+  const [editingAmount, setEditingAmount] = useState('');
 
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -275,11 +276,20 @@ const Budgets: React.FC<BudgetsProps> = ({ transactions, categories, selectedMon
                   const handleStartEdit = () => {
                     setEditingTransactionId(tx.id);
                     setEditingCategory(tx.category);
+                    setEditingAmount(tx.amount.toString());
                   };
 
-                  const handleSaveCategory = () => {
-                    if (onUpdateTransaction && editingCategory !== tx.category) {
-                      onUpdateTransaction({ ...tx, category: editingCategory });
+                  const handleSaveTransaction = () => {
+                    const newAmount = parseFloat(editingAmount);
+                    if (isNaN(newAmount) || newAmount < 0) {
+                      alert('Please enter a valid amount');
+                      return;
+                    }
+
+                    if (onUpdateTransaction) {
+                      if (editingCategory !== tx.category || newAmount !== tx.amount) {
+                        onUpdateTransaction({ ...tx, category: editingCategory, amount: newAmount });
+                      }
                     }
                     setEditingTransactionId(null);
                   };
@@ -287,6 +297,7 @@ const Budgets: React.FC<BudgetsProps> = ({ transactions, categories, selectedMon
                   const handleCancelEdit = () => {
                     setEditingTransactionId(null);
                     setEditingCategory('');
+                    setEditingAmount('');
                   };
 
                   return (
@@ -295,24 +306,36 @@ const Budgets: React.FC<BudgetsProps> = ({ transactions, categories, selectedMon
                         <div className="flex-1">
                           <div className="flex justify-between items-center mb-1">
                             <span className="text-xs text-gray-400">{new Date(tx.date).toLocaleDateString()}</span>
-                            <span className="font-medium text-white">₹{tx.amount.toLocaleString()}</span>
+                            {!isEditing && <span className="font-medium text-white">₹{tx.amount.toLocaleString()}</span>}
                           </div>
                           <p className="text-sm text-gray-200">{tx.merchant}</p>
 
                           {isEditing && (
-                            <div className="mt-2">
-                              <select
-                                value={editingCategory}
-                                onChange={(e) => setEditingCategory(e.target.value)}
-                                className="w-full bg-gray-900 border border-gray-600 rounded px-2 py-1 text-sm text-white focus:border-blue-500 focus:outline-none"
-                              >
-                                {categories.map(cat => (
-                                  <option key={cat.id} value={cat.name}>{cat.name}</option>
-                                ))}
-                              </select>
+                            <div className="mt-2 space-y-2">
+                              <div>
+                                <label className="block text-xs text-gray-400 mb-1">Amount</label>
+                                <input
+                                  type="number"
+                                  value={editingAmount}
+                                  onChange={(e) => setEditingAmount(e.target.value)}
+                                  className="w-full bg-gray-900 border border-gray-600 rounded px-2 py-1 text-sm text-white focus:border-blue-500 focus:outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs text-gray-400 mb-1">Category</label>
+                                <select
+                                  value={editingCategory}
+                                  onChange={(e) => setEditingCategory(e.target.value)}
+                                  className="w-full bg-gray-900 border border-gray-600 rounded px-2 py-1 text-sm text-white focus:border-blue-500 focus:outline-none"
+                                >
+                                  {categories.map(cat => (
+                                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                                  ))}
+                                </select>
+                              </div>
                               <div className="flex gap-2 mt-2">
                                 <button
-                                  onClick={handleSaveCategory}
+                                  onClick={handleSaveTransaction}
                                   className="flex-1 py-1 px-2 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded transition-colors"
                                 >
                                   Save
@@ -332,7 +355,7 @@ const Budgets: React.FC<BudgetsProps> = ({ transactions, categories, selectedMon
                           <button
                             onClick={handleStartEdit}
                             className="p-1 text-gray-400 hover:text-blue-400 transition-colors"
-                            title="Change category"
+                            title="Edit transaction"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" /></svg>
                           </button>
