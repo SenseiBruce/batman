@@ -2,6 +2,8 @@ import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis, BarChart, Bar } from 'recharts';
 import { Transaction, Category } from '../types';
 import { Link } from 'react-router-dom';
+import TopMerchants from '../components/TopMerchants';
+import CategoryTrends from '../components/CategoryTrends';
 
 interface HomeProps {
   transactions: Transaction[];
@@ -119,6 +121,7 @@ const Home: React.FC<HomeProps> = ({ transactions, categories, selectedMonth, on
         <div className="flex justify-between items-center mb-3">
           <div>
             <h1 className="text-2xl font-bold text-white">Overview</h1>
+            <Link to="/subscriptions" className="mt-2 inline-block px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-sm">Go to Subscriptions</Link>
           </div>
           <Link to="/settings" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 hover:bg-gray-700 transition-colors text-gray-300">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
@@ -236,6 +239,51 @@ const Home: React.FC<HomeProps> = ({ transactions, categories, selectedMonth, on
         </div>
       </div>
 
+      {/* Spending Forecast (Only for current month) */}
+      {(() => {
+        const today = new Date();
+        const currentMonthStr = today.toISOString().slice(0, 7);
+        const isCurrentMonth = selectedMonth === currentMonthStr;
+
+        if (isCurrentMonth) {
+          const daysInMonthTotal = new Date(year, month, 0).getDate();
+          const dayOfMonth = today.getDate();
+
+          if (dayOfMonth > 1) {
+            const dailyAvg = totalExpenses / dayOfMonth;
+            const projectedTotal = dailyAvg * daysInMonthTotal;
+            const isOverBudget = projectedTotal > totalBudget;
+
+            return (
+              <div className={`p-4 rounded-xl border ${isOverBudget ? 'bg-red-900/20 border-red-500/30' : 'bg-green-900/20 border-green-500/30'} mb-6`}>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className={`text-sm font-bold uppercase tracking-wider ${isOverBudget ? 'text-red-400' : 'text-green-400'}`}>
+                      {isOverBudget ? '⚠️ Projected Overspend' : '✅ On Track'}
+                    </p>
+                    <p className="text-3xl font-bold text-white mt-1">₹{Math.round(projectedTotal).toLocaleString()}</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Forecast based on current spending trend
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-full ${isOverBudget ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
+                    {isOverBudget ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+        }
+        return null;
+      })()}
+
+      {/* Top Merchants Widget */}
+      <TopMerchants transactions={transactions} selectedMonth={selectedMonth} />
+
       {/* Month-over-Month Comparison */}
       <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 mb-6">
         <h3 className="text-white font-semibold mb-4">Month Comparison</h3>
@@ -314,6 +362,9 @@ const Home: React.FC<HomeProps> = ({ transactions, categories, selectedMonth, on
           </div>
         </div>
       </div>
+
+      {/* Category Trends Chart */}
+      <CategoryTrends transactions={transactions} categories={categories} />
 
       {/* Recent Transactions */}
       <div>

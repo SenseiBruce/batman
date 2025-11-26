@@ -9,6 +9,7 @@ import AddTransaction from './pages/AddTransaction';
 import Jarvis from './pages/Jarvis';
 import Budgets from './pages/Budgets';
 import Settings from './pages/Settings';
+import Subscriptions from './pages/Subscriptions';
 import { Transaction, Category } from './types';
 import { DEFAULT_CATEGORIES, CATEGORY_KEYWORDS } from './constants';
 import { fetchAllSmsTransactions } from './services/smsService';
@@ -257,6 +258,12 @@ const App: React.FC = () => {
           <Route path="/overview" element={
             <>
               <Home transactions={transactions} categories={categories} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
+              <BottomNav />
+            </>
+          } />
+          <Route path="/subscriptions" element={
+            <>
+              <Subscriptions transactions={transactions} />
               <BottomNav />
             </>
           } />
