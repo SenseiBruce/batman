@@ -14,8 +14,8 @@ const NavItem = ({ to, icon, label, active, gradientFrom = 'blue-400', gradientT
   <Link
     to={to}
     className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-all duration-300 ${active
-        ? `text-transparent bg-clip-text bg-gradient-to-r from-${gradientFrom} to-${gradientTo}`
-        : 'text-slate-500 hover:text-slate-400'
+      ? `text-transparent bg-clip-text bg-gradient-to-r from-${gradientFrom} to-${gradientTo}`
+      : 'text-slate-500 hover:text-slate-400'
       }`}
   >
     <div className={`transition-all duration-300 ${active ? 'scale-110' : 'scale-100'}`}>
@@ -71,16 +71,30 @@ export const BottomNav = () => {
         </Link>
       </div>
       <NavItem
-        to="/insights"
-        active={p === '/insights'}
-        label="Insights"
-        gradientFrom="pink-400"
-        gradientTo="pink-600"
+        to="/subscriptions"
+        active={p === '/subscriptions'}
+        label="Subscriptions"
+        gradientFrom="purple-400"
+        gradientTo="purple-600"
         icon={
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="20" x2="12" y2="10" />
-            <line x1="18" y1="20" x2="18" y2="4" />
-            <line x1="6" y1="20" x2="6" y2="16" />
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+        }
+      />
+      <NavItem
+        to="/split-bills"
+        active={p === '/split-bills'}
+        label="Split"
+        gradientFrom="green-400"
+        gradientTo="green-600"
+        icon={
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
           </svg>
         }
       />
@@ -88,18 +102,11 @@ export const BottomNav = () => {
         to="/jarvis"
         active={p === '/jarvis'}
         label="Jarvis"
-        gradientFrom="cyan-400"
-        gradientTo="cyan-600"
+        gradientFrom="pink-400"
+        gradientTo="pink-600"
         icon={
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2v-4Z" />
-            <path d="M12 16v6" />
-            <path d="M19.07 4.93 17.66 6.34" />
-            <path d="M22 12h-4" />
-            <path d="M19.07 19.07l-1.41-1.41" />
-            <path d="M4.93 19.07l1.41-1.41" />
-            <path d="M2 12h4" />
-            <path d="M4.93 4.93l1.41 1.41" />
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
           </svg>
         }
       />

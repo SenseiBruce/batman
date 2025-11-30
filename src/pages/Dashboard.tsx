@@ -9,6 +9,7 @@ import { generateDailyInsight } from '../services/insightService';
 import { AnimatedNumber, AnimatedProgressBar } from '../components/AnimatedNumber';
 import { GoalsWidget } from '../components/GoalsWidget';
 import { Goal } from '../types';
+import { BudgetAnalysisCard } from '../components/BudgetAnalysisCard';
 
 interface DashboardProps {
   transactions: Transaction[];
@@ -174,6 +175,14 @@ const Dashboard: React.FC<DashboardProps> = ({
   const totalBudget = categories.reduce((acc, c) => acc + c.budget, 0);
   const totalSpent = monthlyTransactions.reduce((acc, t) => acc + t.amount, 0);
 
+
+  // ... (inside Dashboard component)
+
+  const handleOpenBudgetSettings = () => {
+    // This will be handled by parent or navigation
+    window.location.hash = '#/budget-settings';
+  };
+
   return (
     <div ref={contentRef} className="pb-24 pt-6 px-4 max-w-md mx-auto min-h-screen bg-gray-900 relative">
       <header className="mb-6">
@@ -183,6 +192,24 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div className="flex items-center gap-3 no-capture">
+            {/* Accounts Button */}
+            <button
+              onClick={() => window.location.hash = '#/accounts'}
+              className="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+              title="Accounts"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
+            </button>
+
+            {/* Budget Settings Button */}
+            <button
+              onClick={handleOpenBudgetSettings}
+              className="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+              title="Budget Settings"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
+            </button>
+
             {/* Add Category Button */}
             <button
               onClick={() => setShowAddModal(true)}
@@ -233,6 +260,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           </button>
         </div>
       </header>
+
+      {/* Budget Analysis Card */}
+      <BudgetAnalysisCard categories={categories} transactions={monthlyTransactions} />
 
       {/* Smart Insight Card */}
       <SmartInsightCard insight={dailyInsight} />

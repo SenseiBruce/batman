@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { BottomNav } from './components/BottomNav';
 import { SecureStorageService } from './services/secureStorageService';
+import { WidgetService } from './services/widgetService';
 import Dashboard from './pages/Dashboard';
 import Insights from './pages/Insights';
 import Transactions from './pages/Transactions';
@@ -9,11 +10,17 @@ import AddTransaction from './pages/AddTransaction';
 import Jarvis from './pages/Jarvis';
 import Settings from './pages/Settings';
 import Subscriptions from './pages/Subscriptions';
+import SplitBillPage from './pages/SplitBillPage';
+import BudgetSettingsPage from './pages/BudgetSettingsPage';
+import AccountsPage from './pages/AccountsPage';
 import Onboarding from './pages/Onboarding';
 import { Transaction, Category, Goal } from './types';
 import { DEFAULT_CATEGORIES, CATEGORY_KEYWORDS } from './constants';
 import { fetchAllSmsTransactions } from './services/smsService';
 import { PageTransition } from './components/PageTransition';
+import { CreateSplitModal } from './components/CreateSplitModal';
+import { BudgetService } from './services/budgetService';
+import { AccountService } from './services/accountService';
 
 const App: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -21,6 +28,7 @@ const App: React.FC = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // YYYY-MM format
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [isCreateSplitModalOpen, setIsCreateSplitModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -36,9 +44,28 @@ const App: React.FC = () => {
 
         // Transactions
         const txData = await SecureStorageService.get<Transaction[]>('transactions');
-        if (txData) {
-          setTransactions(txData);
+        let loadedTxs = txData || [];
+
+        // Accounts Migration
+        const accounts = await AccountService.getAccounts();
+        if (accounts.length === 0) {
+          console.log('📦 Migrating: Creating default Cash account...');
+          const defaultAcc = await AccountService.createAccount('Cash', 'cash', 0);
+
+          // Assign existing transactions to default account
+          if (loadedTxs.length > 0) {
+            loadedTxs = loadedTxs.map(t => ({ ...t, accountId: defaultAcc.id }));
+            await SecureStorageService.set('transactions', loadedTxs);
+
+            // Recalculate balance
+            const balance = loadedTxs.reduce((sum, t) => {
+              return t.type === 'credit' ? sum + t.amount : sum - t.amount;
+            }, 0);
+            await AccountService.updateAccountBalance(defaultAcc.id, balance, true); // Set initial balance
+          }
         }
+
+        setTransactions(loadedTxs);
 
         // Goals
         const goalsData = await SecureStorageService.get<Goal[]>('goals');
@@ -96,6 +123,7 @@ const App: React.FC = () => {
             SecureStorageService.set('transactions', updated).catch(e =>
               console.error('Failed to save transactions:', e)
             );
+            WidgetService.updateWidgets(); // Update widgets
             console.log(`✅ Auto-sync: Added ${uniqueNewTxs.length} new transactions`);
             return updated;
           });
@@ -113,12 +141,56 @@ const App: React.FC = () => {
     return () => clearTimeout(timeoutId);
   }, []);
 
+  // Handle Budget Rollover on Month Change
+  useEffect(() => {
+    const checkRollover = async () => {
+      if (!isDataLoaded || categories.length === 0) return;
+
+      const lastRolloverMonth = await SecureStorageService.get<string>('last_rollover_month');
+      const currentMonth = new Date().toISOString().slice(0, 7);
+
+      if (lastRolloverMonth !== currentMonth) {
+        console.log('📅 New month detected, checking for rollovers...');
+
+        // Calculate previous month date range
+        const now = new Date();
+        const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+        let hasUpdates = false;
+        const updatedCategories = categories.map(cat => {
+          if (cat.budgetConfig?.rollover) {
+            const spent = BudgetService.calculateSpent(cat, transactions, prevMonthStart, prevMonthEnd);
+            const rolloverAmount = BudgetService.calculateRollover(cat, spent);
+
+            if (rolloverAmount !== (cat.rolloverAmount || 0)) {
+              hasUpdates = true;
+              return { ...cat, rolloverAmount };
+            }
+          }
+          return cat;
+        });
+
+        if (hasUpdates) {
+          setCategories(updatedCategories);
+          await SecureStorageService.set('categories', updatedCategories);
+          console.log('✅ Rollover amounts updated');
+        }
+
+        await SecureStorageService.set('last_rollover_month', currentMonth);
+      }
+    };
+
+    checkRollover();
+  }, [isDataLoaded, selectedMonth]);
+
   const updateTransaction = (updatedTx: Transaction) => {
     setTransactions(prev => {
       const updated = prev.map(t => t.id === updatedTx.id ? updatedTx : t);
       SecureStorageService.set('transactions', updated).catch(e =>
         console.error('Failed to save transactions:', e)
       );
+      WidgetService.updateWidgets(); // Update widgets
       return updated;
     });
   };
@@ -129,6 +201,7 @@ const App: React.FC = () => {
       SecureStorageService.set('transactions', updated).catch(e =>
         console.error('Failed to save transactions:', e)
       );
+      WidgetService.updateWidgets(); // Update widgets
       return updated;
     });
   };
@@ -143,6 +216,7 @@ const App: React.FC = () => {
       SecureStorageService.set('transactions', updated).catch(e =>
         console.error('Failed to save transactions:', e)
       );
+      WidgetService.updateWidgets(); // Update widgets
       return updated;
     });
   };
@@ -153,6 +227,7 @@ const App: React.FC = () => {
       SecureStorageService.set('transactions', updated).catch(e =>
         console.error('Failed to save transactions:', e)
       );
+      WidgetService.updateWidgets(); // Update widgets
       return updated;
     });
   };
@@ -163,6 +238,7 @@ const App: React.FC = () => {
       SecureStorageService.set('categories', updated).catch(e =>
         console.error('Failed to save categories:', e)
       );
+      WidgetService.updateWidgets(); // Update widgets
       return updated;
     });
   };
@@ -255,6 +331,19 @@ const App: React.FC = () => {
           <Route path="/subscriptions" element={
             <Subscriptions transactions={transactions} />
           } />
+          <Route path="/split-bills" element={
+            <SplitBillPage onCreateSplit={() => setIsCreateSplitModalOpen(true)} />
+          } />
+          <Route path="/budget-settings" element={
+            <BudgetSettingsPage
+              categories={categories}
+              onUpdateCategory={updateCategory}
+              onBack={() => navigate('/')}
+            />
+          } />
+          <Route path="/accounts" element={
+            <AccountsPage onBack={() => navigate('/')} />
+          } />
           <Route path="/settings" element={
             <Settings onClearTransactions={clearTransactions} />
           } />
@@ -262,6 +351,11 @@ const App: React.FC = () => {
         </Routes>
       </PageTransition>
       {showBottomNav && <BottomNav />}
+      <CreateSplitModal
+        isOpen={isCreateSplitModalOpen}
+        onClose={() => setIsCreateSplitModalOpen(false)}
+        transactions={transactions}
+      />
     </div>
   );
 };

@@ -4,4 +4,6 @@
     <string name="title_activity_main">Jarvis Expenses</string>
     <string name="package_name">com.jarvis.expensetracker</string>
     <string name="custom_url_scheme">com.jarvis.expensetracker</string>
+    <string name="widget_quick_add_description">Quickly add expenses from your home screen</string>
+    <string name="widget_budget_description">View your monthly budget at a glance</string>
 </resources>
