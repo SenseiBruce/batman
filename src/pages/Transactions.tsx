@@ -11,6 +11,7 @@ import { PullToRefresh } from '../components/PullToRefresh';
 import { HapticService } from '../services/hapticService';
 import { CalendarView } from '../components/CalendarView';
 import { exportToCSV } from '../utils/export';
+import { Capacitor } from '@capacitor/core';
 
 interface TransactionsProps {
   transactions: Transaction[];
@@ -288,21 +289,23 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
 
       {/* Actions */}
       <div className="grid grid-cols-3 gap-2 mb-6">
-        <button
-          onClick={handleSync}
-          disabled={isSyncing}
-          className="flex flex-col items-center justify-center gap-1 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white py-3 rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-900/20 text-xs"
-        >
-          {isSyncing ? (
-            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          ) : (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-          )}
-          <span>Sync SMS</span>
-        </button>
+        {Capacitor.getPlatform() !== 'ios' && (
+          <button
+            onClick={handleSync}
+            disabled={isSyncing}
+            className="flex flex-col items-center justify-center gap-1 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white py-3 rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-900/20 text-xs"
+          >
+            {isSyncing ? (
+              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+            )}
+            <span>Sync SMS</span>
+          </button>
+        )}
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={isSyncing}

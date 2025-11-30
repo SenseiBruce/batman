@@ -2,7 +2,7 @@
 import { Preferences } from '@capacitor/preferences';
 import { Transaction } from '../types';
 import { DEFAULT_CATEGORIES, CATEGORY_KEYWORDS } from '../constants';
-import { registerPlugin } from '@capacitor/core';
+import { registerPlugin, Capacitor } from '@capacitor/core';
 import { GeminiCategorizationService } from './geminiCategorizationService';
 
 // Register the SMS Reader plugin
@@ -257,6 +257,10 @@ async function parseSmsToTransaction(smsBody: string, smsDate: string, smsFrom: 
 
 /** Initialize SMS reading and return all parsed transactions. */
 export async function fetchAllSmsTransactions(): Promise<Transaction[]> {
+    if (Capacitor.getPlatform() === 'ios') {
+        console.log('🍎 iOS detected: SMS reading is not supported. Skipping.');
+        return [];
+    }
     const granted = await requestSmsPermissions();
     if (!granted) {
         console.warn('SMS permissions not granted');
@@ -324,6 +328,9 @@ export async function fetchAllSmsTransactions(): Promise<Transaction[]> {
 
 /** Export debug data */
 export async function exportSmsDebugData(): Promise<string> {
+    if (Capacitor.getPlatform() === 'ios') {
+        throw new Error('SMS reading is not supported on iOS due to privacy restrictions.');
+    }
     const granted = await requestSmsPermissions();
     if (!granted) throw new Error('SMS permissions not granted');
     const result = await SMSReader.getMessages({});

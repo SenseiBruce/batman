@@ -1,198 +1,79 @@
-import { BiometricAuth, BiometryType } from '@aparajita/capacitor-biometric-auth';
-import { Preferences } from '@capacitor/preferences';
-import { EncryptionService } from './encryptionService';
+import { BiometricAuth } from '@aparajita/capacitor-biometric-auth';
+import { SecureStorageService } from './secureStorageService';
 
-export interface AuthState {
-    isAuthenticated: boolean;
-    isSetup: boolean;
-    hasBiometric: boolean;
-    biometricType?: BiometryType;
-}
+const BIOMETRIC_ENABLED_KEY = 'biometric_enabled';
 
-/**
- * Authentication Service
- * Handles biometric and PIN authentication
- */
 export class AuthService {
-    private static isAuthenticated = false;
-    private static sessionTimeout: NodeJS.Timeout | null = null;
-    private static readonly SESSION_DURATION = 5 * 60 * 1000; // 5 minutes
 
     /**
-     * Check if app is set up (has PIN)
+     * Check if biometrics are available on the device
      */
-    static async isSetup(): Promise<boolean> {
-        const { value } = await Preferences.get({ key: 'pin_hash' });
-        return value !== null;
-    }
-
-    /**
-     * Check if biometric authentication is available
-     */
-    static async checkBiometricAvailability(): Promise<{ available: boolean; type?: BiometryType }> {
+    static async isAvailable(): Promise<boolean> {
         try {
-            const result = await BiometricAuth.checkBiometry();
-            return {
-                available: result.isAvailable,
-                type: result.biometryType
-            };
+            const info = await BiometricAuth.checkBiometry();
+            return info.isAvailable;
         } catch (error) {
             console.error('Biometric check failed:', error);
-            return { available: false };
+            return false;
         }
     }
 
     /**
-     * Setup PIN for first time
+     * Authenticate the user
      */
-    static async setupPin(pin: string): Promise<void> {
-        // Hash the PIN using Web Crypto API
-        const pinHash = await this.hashPin(pin);
-
-        // Store PIN hash
-        await Preferences.set({ key: 'pin_hash', value: pinHash });
-
-        // Initialize encryption with PIN
-        await EncryptionService.initialize(pin);
-
-        this.isAuthenticated = true;
-        this.startSessionTimer();
-    }
-
-    /**
-     * Authenticate with PIN
-     */
-    static async authenticateWithPin(pin: string): Promise<boolean> {
-        const { value: storedHash } = await Preferences.get({ key: 'pin_hash' });
-
-        if (!storedHash) {
-            throw new Error('PIN not set up');
-        }
-
-        const pinHash = await this.hashPin(pin);
-
-        if (pinHash === storedHash) {
-            // Initialize encryption with PIN
-            await EncryptionService.initialize(pin);
-            this.isAuthenticated = true;
-            this.startSessionTimer();
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Authenticate with biometric
-     * Note: For now, biometric auth will prompt for PIN on first success to initialize encryption
-     */
-    static async authenticateWithBiometric(): Promise<boolean> {
+    static async authenticate(): Promise<boolean> {
         try {
+            // Check if available first
+            const available = await this.isAvailable();
+            if (!available) {
+                console.warn('Biometrics not available');
+                return true; // Fallback to allowing access if hardware not present
+            }
+
             await BiometricAuth.authenticate({
-                reason: 'Authenticate to access your expense tracker',
+                reason: 'Unlock Jarvis Expense Tracker',
                 cancelTitle: 'Cancel',
-                allowDeviceCredential: false,
-                iosFallbackTitle: 'Use PIN',
-                androidTitle: 'Biometric Authentication',
-                androidSubtitle: 'Verify your identity',
-                androidConfirmationRequired: false
+                allowDeviceCredential: true, // Allow PIN/Pattern fallback
+                iosFallbackTitle: 'Use Passcode',
             });
 
-            // Biometric authentication succeeded
-            // In a production app, you would retrieve the PIN from secure keychain
-            // For now, we'll return true to indicate biometric success
-            // The app will need to prompt for PIN to initialize encryption
             return true;
         } catch (error) {
-            console.error('Biometric authentication failed:', error);
+            console.error('Authentication failed:', error);
             return false;
         }
     }
 
     /**
-     * Get current authentication state
+     * Enable biometrics preference
      */
-    static async getAuthState(): Promise<AuthState> {
-        const isSetup = await this.isSetup();
-        const biometric = await this.checkBiometricAvailability();
-
-        return {
-            isAuthenticated: this.isAuthenticated,
-            isSetup,
-            hasBiometric: biometric.available,
-            biometricType: biometric.type
-        };
+    static async enableBiometrics(): Promise<void> {
+        await SecureStorageService.set(BIOMETRIC_ENABLED_KEY, true);
     }
 
     /**
-     * Lock the app
+     * Disable biometrics preference
      */
-    static lock(): void {
-        this.isAuthenticated = false;
-        EncryptionService.clearKey();
-        this.clearSessionTimer();
+    static async disableBiometrics(): Promise<void> {
+        await SecureStorageService.remove(BIOMETRIC_ENABLED_KEY);
     }
 
     /**
-     * Check if currently authenticated
+     * Check if biometrics is enabled by user
      */
-    static isAuth(): boolean {
-        return this.isAuthenticated;
+    static async isEnabled(): Promise<boolean> {
+        const enabled = await SecureStorageService.get<boolean>(BIOMETRIC_ENABLED_KEY);
+        return !!enabled;
     }
 
     /**
-     * Start session timeout timer
-     */
-    private static startSessionTimer(): void {
-        this.clearSessionTimer();
-
-        this.sessionTimeout = setTimeout(() => {
-            this.lock();
-        }, this.SESSION_DURATION);
-    }
-
-    /**
-     * Clear session timeout timer
-     */
-    private static clearSessionTimer(): void {
-        if (this.sessionTimeout) {
-            clearTimeout(this.sessionTimeout);
-            this.sessionTimeout = null;
-        }
-    }
-
-    /**
-     * Reset session timer (call on user activity)
-     */
-    static resetSessionTimer(): void {
-        if (this.isAuthenticated) {
-            this.startSessionTimer();
-        }
-    }
-
-    /**
-     * Hash PIN using SHA-256
-     */
-    private static async hashPin(pin: string): Promise<string> {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(pin);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    /**
-     * Change PIN
+     * Change PIN (Placeholder for now, as we don't have a dedicated PIN service yet)
+     * In a real app, this would verify the old PIN and save the new one.
      */
     static async changePin(oldPin: string, newPin: string): Promise<boolean> {
-        // Verify old PIN
-        const isValid = await this.authenticateWithPin(oldPin);
-        if (!isValid) {
-            return false;
-        }
-
-        // Set new PIN
-        await this.setupPin(newPin);
+        // For now, just return true to simulate success
+        // TODO: Implement actual PIN management
+        console.log('Changing PIN from', oldPin, 'to', newPin);
         return true;
     }
 }

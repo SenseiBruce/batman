@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Preferences } from '@capacitor/preferences';
+import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { AuthService } from '../services/authService';
@@ -22,15 +23,36 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
   const [apiKey, setApiKey] = useState('');
   const [error, setError] = useState('');
   const [hasBiometric, setHasBiometric] = useState(false);
+  const [isAppLockEnabled, setIsAppLockEnabled] = useState(false);
 
   useEffect(() => {
     checkBiometric();
     loadApiKey();
+    loadAppLockState();
   }, []);
 
   const checkBiometric = async () => {
-    const state = await AuthService.getAuthState();
-    setHasBiometric(state.hasBiometric);
+    const available = await AuthService.isAvailable();
+    setHasBiometric(available);
+  };
+
+  const loadAppLockState = async () => {
+    const enabled = await AuthService.isEnabled();
+    setIsAppLockEnabled(enabled);
+  };
+
+  const toggleAppLock = async () => {
+    // Authenticate before changing security settings
+    const authenticated = await AuthService.authenticate();
+    if (authenticated) {
+      if (isAppLockEnabled) {
+        await AuthService.disableBiometrics();
+        setIsAppLockEnabled(false);
+      } else {
+        await AuthService.enableBiometrics();
+        setIsAppLockEnabled(true);
+      }
+    }
   };
 
   const loadApiKey = async () => {
@@ -177,9 +199,17 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
               <div className="flex items-center justify-between py-2">
                 <div className="flex items-center gap-2">
                   <svg className="w-4 h-4 text-blue-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" /><path d="M14 13.12c0 2.38 0 6.38-1 8.88" /><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" /><path d="M2 12a10 10 0 0 1 18-6" /><path d="M2 16h.01" /><path d="M21.8 16c.2-2 .131-5.354 0-6" /><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2" /><path d="M8.65 22c.21-.66.45-1.32.57-2" /><path d="M9 6.8a6 6 0 0 1 9 5.2v2" /></svg>
-                  <span className="text-sm text-gray-300">Biometric Auth</span>
+                  <div>
+                    <span className="text-sm text-gray-300 block">Biometric App Lock</span>
+                    <span className="text-xs text-gray-500">Require authentication to open</span>
+                  </div>
                 </div>
-                <span className="text-xs text-blue-400 bg-blue-400/10 px-2 py-1 rounded">Available</span>
+                <button
+                  onClick={toggleAppLock}
+                  className={`w-12 h-7 rounded-full transition-colors relative ${isAppLockEnabled ? 'bg-blue-600' : 'bg-gray-600'}`}
+                >
+                  <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${isAppLockEnabled ? 'left-6' : 'left-1'}`} />
+                </button>
               </div>
             )}
           </div>
@@ -199,15 +229,18 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
         <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
           <h3 className="text-white font-semibold mb-2">Data Management</h3>
 
-          <button
-            className="w-full text-left py-3 px-2 text-blue-400 hover:bg-gray-700/50 rounded transition-colors flex items-center gap-2"
-            onClick={handleExportDebugData}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-            Export Debug Data (SMS + Parsed)
-          </button>
-
-          <div className="h-px bg-gray-700 my-1"></div>
+          {Capacitor.getPlatform() !== 'ios' && (
+            <>
+              <button
+                className="w-full text-left py-3 px-2 text-blue-400 hover:bg-gray-700/50 rounded transition-colors flex items-center gap-2"
+                onClick={handleExportDebugData}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                Export Debug Data (SMS + Parsed)
+              </button>
+              <div className="h-px bg-gray-700 my-1"></div>
+            </>
+          )}
 
           <button
             className="w-full text-left py-3 px-2 text-yellow-400 hover:bg-gray-700/50 rounded transition-colors flex items-center gap-2"

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import { BottomNav } from './components/BottomNav';
 import { SecureStorageService } from './services/secureStorageService';
 import { WidgetService } from './services/widgetService';
@@ -17,10 +18,14 @@ import Onboarding from './pages/Onboarding';
 import { Transaction, Category, Goal } from './types';
 import { DEFAULT_CATEGORIES, CATEGORY_KEYWORDS } from './constants';
 import { fetchAllSmsTransactions } from './services/smsService';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 import { PageTransition } from './components/PageTransition';
 import { CreateSplitModal } from './components/CreateSplitModal';
 import { BudgetService } from './services/budgetService';
 import { AccountService } from './services/accountService';
+import { AuthService } from './services/authService';
+import { LockScreen } from './components/LockScreen';
 
 const App: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -108,6 +113,8 @@ const App: React.FC = () => {
   // Auto-sync SMS transactions on app startup
   useEffect(() => {
     const autoSync = async () => {
+      if (Capacitor.getPlatform() === 'ios') return;
+
       try {
         console.log('🔄 Auto-syncing SMS on app startup...');
         const newTxs = await fetchAllSmsTransactions();
@@ -139,6 +146,33 @@ const App: React.FC = () => {
     // Run auto-sync after a short delay to let the app load first
     const timeoutId = setTimeout(autoSync, 1000);
     return () => clearTimeout(timeoutId);
+  }, []);
+
+  const [isLocked, setIsLocked] = useState(false);
+
+  // Initialize App Lock and Listen for Background State
+  useEffect(() => {
+    const initLock = async () => {
+      const enabled = await AuthService.isEnabled();
+      if (enabled) {
+        setIsLocked(true);
+      }
+    };
+    initLock();
+
+    const listener = CapacitorApp.addListener('appStateChange', async ({ isActive }) => {
+      if (!isActive) {
+        // App went to background
+        const enabled = await AuthService.isEnabled();
+        if (enabled) {
+          setIsLocked(true);
+        }
+      }
+    });
+
+    return () => {
+      listener.then(handle => handle.remove());
+    };
   }, []);
 
   // Handle Budget Rollover on Month Change
@@ -300,56 +334,60 @@ const App: React.FC = () => {
   const showBottomNav = !['/add', '/onboarding'].includes(location.pathname);
 
   return (
-    <div className="bg-gray-900 text-gray-100 min-h-screen font-sans">
-      <PageTransition>
-        <Routes location={location}>
-          <Route path="/" element={
-            <Dashboard
-              transactions={transactions}
-              categories={categories}
-              goals={goals}
-              selectedMonth={selectedMonth}
-              onMonthChange={setSelectedMonth}
-              onUpdateCategory={updateCategory}
-              onAddCategory={addCategory}
-              onUpdateTransaction={updateTransaction}
-              onAddGoal={addGoal}
-              onUpdateGoal={updateGoal}
-              onDeleteGoal={deleteGoal}
-            />
-          } />
-          <Route path="/transactions" element={
-            <Transactions transactions={transactions} categories={categories} onDelete={deleteTransaction} onAdd={addTransaction} onBulkAdd={addBulkTransactions} />
-          } />
-          <Route path="/add" element={<AddTransaction onAdd={addTransaction} categories={categories} />} />
-          <Route path="/jarvis" element={
-            <Jarvis transactions={transactions} />
-          } />
-          <Route path="/insights" element={
-            <Insights transactions={transactions} categories={categories} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
-          } />
-          <Route path="/subscriptions" element={
-            <Subscriptions transactions={transactions} />
-          } />
-          <Route path="/split-bills" element={
-            <SplitBillPage onCreateSplit={() => setIsCreateSplitModalOpen(true)} />
-          } />
-          <Route path="/budget-settings" element={
-            <BudgetSettingsPage
-              categories={categories}
-              onUpdateCategory={updateCategory}
-              onBack={() => navigate('/')}
-            />
-          } />
-          <Route path="/accounts" element={
-            <AccountsPage onBack={() => navigate('/')} />
-          } />
-          <Route path="/settings" element={
-            <Settings onClearTransactions={clearTransactions} />
-          } />
-          <Route path="/onboarding" element={<Onboarding />} />
-        </Routes>
-      </PageTransition>
+    <div className="app-container">
+      {isLocked && <LockScreen onUnlock={() => setIsLocked(false)} />}
+
+      <AnimatePresence mode="wait">
+        <PageTransition>
+          <Routes location={location}>
+            <Route path="/" element={
+              <Dashboard
+                transactions={transactions}
+                categories={categories}
+                goals={goals}
+                selectedMonth={selectedMonth}
+                onMonthChange={setSelectedMonth}
+                onUpdateCategory={updateCategory}
+                onAddCategory={addCategory}
+                onUpdateTransaction={updateTransaction}
+                onAddGoal={addGoal}
+                onUpdateGoal={updateGoal}
+                onDeleteGoal={deleteGoal}
+              />
+            } />
+            <Route path="/transactions" element={
+              <Transactions transactions={transactions} categories={categories} onDelete={deleteTransaction} onAdd={addTransaction} onBulkAdd={addBulkTransactions} />
+            } />
+            <Route path="/add" element={<AddTransaction onAdd={addTransaction} categories={categories} />} />
+            <Route path="/jarvis" element={
+              <Jarvis transactions={transactions} />
+            } />
+            <Route path="/insights" element={
+              <Insights transactions={transactions} categories={categories} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
+            } />
+            <Route path="/subscriptions" element={
+              <Subscriptions transactions={transactions} />
+            } />
+            <Route path="/split-bills" element={
+              <SplitBillPage onCreateSplit={() => setIsCreateSplitModalOpen(true)} />
+            } />
+            <Route path="/budget-settings" element={
+              <BudgetSettingsPage
+                categories={categories}
+                onUpdateCategory={updateCategory}
+                onBack={() => navigate('/')}
+              />
+            } />
+            <Route path="/accounts" element={
+              <AccountsPage onBack={() => navigate('/')} />
+            } />
+            <Route path="/settings" element={
+              <Settings onClearTransactions={clearTransactions} />
+            } />
+            <Route path="/onboarding" element={<Onboarding />} />
+          </Routes>
+        </PageTransition>
+      </AnimatePresence>
       {showBottomNav && <BottomNav />}
       <CreateSplitModal
         isOpen={isCreateSplitModalOpen}
