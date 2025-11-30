@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis, BarChart, Bar } from 'recharts';
 import { Transaction, Category } from '../types';
 import { Link } from 'react-router-dom';
 import TopMerchants from '../components/TopMerchants';
 import CategoryTrends from '../components/CategoryTrends';
+import { AnimatedNumber } from '../components/AnimatedNumber';
+import { HapticService } from '../services/hapticService';
 
 interface InsightsProps {
   transactions: Transaction[];
@@ -13,12 +15,18 @@ interface InsightsProps {
 }
 
 const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedMonth, onMonthChange }) => {
+  // Interactive chart state
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [chartType, setChartType] = useState<'pie' | 'bar'>('pie');
+
   // Parse selected month
   const [year, month] = selectedMonth.split('-').map(Number);
 
   const monthlyTransactions = transactions.filter(t => {
     const d = new Date(t.date);
-    return d.toISOString().slice(0, 7) === selectedMonth;
+    const matchesMonth = d.toISOString().slice(0, 7) === selectedMonth;
+    const matchesCategory = !selectedCategory || t.category === selectedCategory;
+    return matchesMonth && matchesCategory;
   });
 
   // Calculate previous month
@@ -76,8 +84,8 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
   const activeAlerts = categories
     .filter(c => c.alertsEnabled !== false)
     .map(c => {
-      const spent = monthlyTransactions
-        .filter(t => t.category === c.name && t.type === 'debit')
+      const spent = transactions
+        .filter(t => t.category === c.name && t.type === 'debit' && new Date(t.date).toISOString().slice(0, 7) === selectedMonth)
         .reduce((acc, t) => acc + t.amount, 0);
       const percentage = (spent / c.budget) * 100;
       return { ...c, spent, percentage };
@@ -87,8 +95,8 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
 
   // Prepare Pie Data
   const categoryData = categories.map(cat => {
-    const amount = monthlyTransactions
-      .filter(t => t.category === cat.name && t.type === 'debit')
+    const amount = transactions
+      .filter(t => t.category === cat.name && t.type === 'debit' && new Date(t.date).toISOString().slice(0, 7) === selectedMonth)
       .reduce((acc, t) => acc + t.amount, 0);
     return { name: cat.name, value: amount, color: cat.color };
   }).filter(d => d.value > 0);
@@ -111,9 +119,33 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
     };
   });
 
-  const recentTransactions = [...transactions]
+  const recentTransactions = [...monthlyTransactions]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 4);
+
+  // Handle chart interactions
+  const handlePieClick = (data: any) => {
+    HapticService.medium(); // Haptic for chart interaction
+    if (selectedCategory === data.name) {
+      setSelectedCategory(null); // Deselect if clicking same category
+    } else {
+      setSelectedCategory(data.name);
+    }
+  };
+
+  const handleBarClick = (data: any) => {
+    HapticService.medium(); // Haptic for chart interaction
+    if (selectedCategory === data.name) {
+      setSelectedCategory(null);
+    } else {
+      setSelectedCategory(data.name);
+    }
+  };
+
+  const clearFilter = () => {
+    HapticService.light(); // Light haptic for clear
+    setSelectedCategory(null);
+  };
 
   return (
     <div className="pb-24 pt-6 px-4 max-w-md mx-auto min-h-screen">
@@ -132,6 +164,7 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
         <div className="flex items-center justify-between bg-gray-800 p-2 rounded-lg border border-gray-700">
           <button
             onClick={() => {
+              HapticService.selectionChanged(); // Haptic for month change
               const date = new Date(selectedMonth + '-01');
               date.setMonth(date.getMonth() - 1);
               onMonthChange(date.toISOString().slice(0, 7));
@@ -145,6 +178,7 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
           </span>
           <button
             onClick={() => {
+              HapticService.selectionChanged(); // Haptic for month change
               const date = new Date(selectedMonth + '-01');
               date.setMonth(date.getMonth() + 1);
               onMonthChange(date.toISOString().slice(0, 7));
@@ -155,6 +189,24 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
           </button>
         </div>
       </header>
+
+      {/* Active Filter Badge */}
+      {selectedCategory && (
+        <div className="mb-4 flex items-center gap-2 bg-blue-900/30 border border-blue-500/30 rounded-lg p-3">
+          <div className="flex-1 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            <span className="text-sm text-blue-300">Filtered by: <span className="font-bold text-white">{selectedCategory}</span></span>
+          </div>
+          <button
+            onClick={clearFilter}
+            className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded-lg transition-colors font-medium"
+          >
+            Clear
+          </button>
+        </div>
+      )}
 
       {/* Notifications Area */}
       {activeAlerts.length > 0 && (
@@ -195,10 +247,17 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
             <span className="text-xs text-red-300 font-medium">Expenses</span>
           </div>
-          <p className="text-2xl font-bold text-white">₹{totalExpenses.toLocaleString()}</p>
-          {prevTotalExpenses > 0 && (
+          <p className="text-2xl font-bold text-white">
+            <AnimatedNumber value={totalExpenses} prefix="₹" duration={1200} />
+          </p>
+          {!selectedCategory && prevTotalExpenses > 0 && (
             <p className={`text-xs mt-1 ${expenseChange > 0 ? 'text-red-400' : 'text-green-400'}`}>
-              {expenseChange > 0 ? '↑' : '↓'} {Math.abs(expenseChange).toFixed(1)}% vs last month
+              {expenseChange > 0 ? '↑' : '↓'} <AnimatedNumber value={Math.abs(expenseChange)} decimals={1} duration={1000} />% vs last month
+            </p>
+          )}
+          {selectedCategory && (
+            <p className="text-xs mt-1 text-gray-400">
+              {selectedCategory} only
             </p>
           )}
         </div>
@@ -209,9 +268,11 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
             <span className="text-xs text-blue-300 font-medium">Budget Left</span>
           </div>
-          <p className="text-2xl font-bold text-white">₹{budgetLeft.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-white">
+            <AnimatedNumber value={budgetLeft} prefix="₹" duration={1200} delay={100} />
+          </p>
           <p className="text-xs mt-1 text-gray-400">
-            {Math.round(budgetProgress)}% used
+            <AnimatedNumber value={budgetProgress} decimals={0} duration={1000} delay={100} />% used
           </p>
         </div>
 
@@ -221,7 +282,9 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
             <span className="text-xs text-purple-300 font-medium">Avg/Day</span>
           </div>
-          <p className="text-2xl font-bold text-white">₹{avgDailySpending.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+          <p className="text-2xl font-bold text-white">
+            <AnimatedNumber value={avgDailySpending} prefix="₹" duration={1200} delay={200} />
+          </p>
         </div>
 
         {/* Days Left in Month */}
@@ -230,10 +293,12 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-400"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
             <span className="text-xs text-orange-300 font-medium">Days Left</span>
           </div>
-          <p className="text-2xl font-bold text-white">{daysLeft > 0 ? daysLeft : daysInMonth}</p>
+          <p className="text-2xl font-bold text-white">
+            <AnimatedNumber value={daysLeft > 0 ? daysLeft : daysInMonth} duration={800} delay={300} />
+          </p>
           {daysLeft > 0 && budgetLeft > 0 && (
             <p className="text-xs mt-1 text-gray-400">
-              ₹{(budgetLeft / daysLeft).toLocaleString(undefined, { maximumFractionDigits: 0 })}/day left
+              <AnimatedNumber value={budgetLeft / daysLeft} prefix="₹" duration={1000} delay={300} />/day left
             </p>
           )}
         </div>
@@ -245,7 +310,7 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
         const currentMonthStr = today.toISOString().slice(0, 7);
         const isCurrentMonth = selectedMonth === currentMonthStr;
 
-        if (isCurrentMonth) {
+        if (isCurrentMonth && !selectedCategory) {
           const daysInMonthTotal = new Date(year, month, 0).getDate();
           const dayOfMonth = today.getDate();
 
@@ -261,7 +326,9 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
                     <p className={`text-sm font-bold uppercase tracking-wider ${isOverBudget ? 'text-red-400' : 'text-green-400'}`}>
                       {isOverBudget ? '⚠️ Projected Overspend' : '✅ On Track'}
                     </p>
-                    <p className="text-3xl font-bold text-white mt-1">₹{Math.round(projectedTotal).toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-white mt-1">
+                      <AnimatedNumber value={projectedTotal} prefix="₹" duration={1500} />
+                    </p>
                     <p className="text-xs text-gray-400 mt-1">
                       Forecast based on current spending trend
                     </p>
@@ -282,64 +349,133 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
       })()}
 
       {/* Top Merchants Widget */}
-      <TopMerchants transactions={transactions} selectedMonth={selectedMonth} />
+      <TopMerchants transactions={monthlyTransactions} selectedMonth={selectedMonth} />
 
       {/* Month-over-Month Comparison */}
-      <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 mb-6">
-        <h3 className="text-white font-semibold mb-4">Month Comparison</h3>
-        <div className="h-48 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={monthComparisonData}>
-              <XAxis dataKey="month" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis hide />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }}
-                labelStyle={{ color: '#9ca3af' }}
-              />
-              <Bar dataKey="expenses" fill="#ef4444" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+      {!selectedCategory && (
+        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 mb-6">
+          <h3 className="text-white font-semibold mb-4">Month Comparison</h3>
+          <div className="h-48 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthComparisonData}>
+                <XAxis dataKey="month" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis hide />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }}
+                  labelStyle={{ color: '#9ca3af' }}
+                />
+                <Bar dataKey="expenses" fill="#ef4444" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 gap-6 mb-6">
         {/* Spending by Category */}
         <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
-          <h3 className="text-white font-semibold mb-4">Spending by Category</h3>
-          <div className="h-48 w-full">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-white font-semibold">Spending by Category</h3>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  HapticService.light(); // Light haptic for toggle
+                  setChartType('pie');
+                }}
+                className={`p-1.5 rounded ${chartType === 'pie' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'} transition-colors`}
+                title="Pie Chart"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+              </button>
+              <button
+                onClick={() => {
+                  HapticService.light(); // Light haptic for toggle
+                  setChartType('bar');
+                }}
+                className={`p-1.5 rounded ${chartType === 'bar' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'} transition-colors`}
+                title="Bar Chart"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+              </button>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 mb-3">💡 Tap a slice/bar to filter transactions</p>
+          <div className="h-48 w-full cursor-pointer">
             {categoryData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={70}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }}
-                    itemStyle={{ color: '#fff' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              chartType === 'pie' ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={70}
+                      paddingAngle={5}
+                      dataKey="value"
+                      onClick={handlePieClick}
+                    >
+                      {categoryData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.color}
+                          stroke={selectedCategory === entry.name ? '#fff' : 'none'}
+                          strokeWidth={selectedCategory === entry.name ? 3 : 0}
+                          opacity={selectedCategory && selectedCategory !== entry.name ? 0.3 : 1}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }}
+                      itemStyle={{ color: '#fff' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={categoryData}>
+                    <XAxis dataKey="name" stroke="#6b7280" fontSize={10} tickLine={false} axisLine={false} />
+                    <YAxis hide />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }}
+                      labelStyle={{ color: '#9ca3af' }}
+                    />
+                    <Bar
+                      dataKey="value"
+                      radius={[8, 8, 0, 0]}
+                      onClick={handleBarClick}
+                    >
+                      {categoryData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.color}
+                          opacity={selectedCategory && selectedCategory !== entry.name ? 0.3 : 1}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )
             ) : (
               <div className="h-full flex items-center justify-center text-gray-500">No data yet</div>
             )}
           </div>
           <div className="flex flex-wrap gap-2 mt-2 justify-center">
             {categoryData.slice(0, 4).map((cat) => (
-              <div key={cat.name} className="flex items-center text-xs text-gray-300">
+              <button
+                key={cat.name}
+                onClick={() => handlePieClick(cat)}
+                className={`flex items-center text-xs transition-all ${selectedCategory === cat.name
+                  ? 'text-white font-bold'
+                  : selectedCategory
+                    ? 'text-gray-500'
+                    : 'text-gray-300'
+                  }`}
+              >
                 <div className="w-2 h-2 rounded-full mr-1" style={{ backgroundColor: cat.color }}></div>
                 {cat.name}
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -369,7 +505,9 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
       {/* Recent Transactions */}
       <div>
         <div className="flex justify-between items-center mb-3">
-          <h3 className="text-lg font-semibold text-white">Recent</h3>
+          <h3 className="text-lg font-semibold text-white">
+            Recent {selectedCategory && `(${selectedCategory})`}
+          </h3>
           <Link to="/transactions" className="text-blue-400 text-sm">View All</Link>
         </div>
         <div className="space-y-3">

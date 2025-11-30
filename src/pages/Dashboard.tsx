@@ -4,18 +4,39 @@ import { requestPushPermission, registerPushListeners, scheduleBudgetAlert } fro
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import html2canvas from 'html2canvas';
+import { SmartInsightCard } from '../components/SmartInsightCard';
+import { generateDailyInsight } from '../services/insightService';
+import { AnimatedNumber, AnimatedProgressBar } from '../components/AnimatedNumber';
+import { GoalsWidget } from '../components/GoalsWidget';
+import { Goal } from '../types';
 
 interface DashboardProps {
   transactions: Transaction[];
   categories: Category[];
+  goals: Goal[];
   selectedMonth: string; // YYYY-MM
   onMonthChange: (month: string) => void;
   onUpdateCategory: (category: Category) => void;
   onAddCategory: (name: string, budget: number) => void;
   onUpdateTransaction?: (transaction: Transaction) => void;
+  onAddGoal: (goal: Goal) => void;
+  onUpdateGoal: (goal: Goal) => void;
+  onDeleteGoal: (id: string) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, selectedMonth, onMonthChange, onUpdateCategory, onAddCategory, onUpdateTransaction }) => {
+const Dashboard: React.FC<DashboardProps> = ({
+  transactions,
+  categories,
+  goals,
+  selectedMonth,
+  onMonthChange,
+  onUpdateCategory,
+  onAddCategory,
+  onUpdateTransaction,
+  onAddGoal,
+  onUpdateGoal,
+  onDeleteGoal
+}) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState('');
   const [editAlerts, setEditAlerts] = useState(true);
@@ -60,6 +81,9 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, selecte
 
   // Keep track of categories we already notified about (to avoid spam)
   const notifiedRef = useRef<Set<string>>(new Set());
+
+  // Generate daily insight
+  const dailyInsight = generateDailyInsight(transactions, categories, selectedMonth);
 
   const formatMonth = (isoMonth: string) => {
     const date = new Date(isoMonth + '-01');
@@ -209,6 +233,17 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, selecte
           </button>
         </div>
       </header>
+
+      {/* Smart Insight Card */}
+      <SmartInsightCard insight={dailyInsight} />
+
+      {/* Goals Widget */}
+      <GoalsWidget
+        goals={goals}
+        onAddGoal={onAddGoal}
+        onUpdateGoal={onUpdateGoal}
+        onDeleteGoal={onDeleteGoal}
+      />
 
       {/* Add Category Modal */}
       {showAddModal && (
@@ -375,22 +410,23 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, selecte
         <div className="flex justify-between items-end mb-2">
           <div>
             <p className="text-gray-400 text-sm">Total Budget</p>
-            <p className="text-2xl font-bold text-white">₹{totalBudget.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-white">
+              <AnimatedNumber value={totalBudget} prefix="₹" duration={1200} />
+            </p>
           </div>
           <div className="text-right">
             <p className="text-gray-400 text-sm">Total Spent</p>
             <p className={`text-xl font-semibold ${totalSpent > totalBudget ? 'text-red-400' : 'text-white'}`}>
-              ₹{totalSpent.toLocaleString()}
+              <AnimatedNumber value={totalSpent} prefix="₹" duration={1200} delay={100} />
             </p>
           </div>
         </div>
-        <div className="relative w-full h-3 bg-gray-700 rounded-full overflow-hidden">
-          <div
-            className={`absolute top-0 left-0 h-full rounded-full transition-all duration-500 ${totalSpent > totalBudget ? 'bg-red-500' : totalSpent > totalBudget * 0.9 ? 'bg-orange-500' : totalSpent > totalBudget * 0.75 ? 'bg-yellow-500' : 'bg-green-500'
-              }`}
-            style={{ width: `${Math.min((totalSpent / totalBudget) * 100, 100)}%` }}
-          ></div>
-        </div>
+        <AnimatedProgressBar
+          percentage={(totalSpent / totalBudget) * 100}
+          duration={1000}
+          delay={200}
+          color={totalSpent > totalBudget ? 'bg-red-500' : totalSpent > totalBudget * 0.9 ? 'bg-orange-500' : totalSpent > totalBudget * 0.75 ? 'bg-yellow-500' : 'bg-green-500'}
+        />
         {totalSpent > totalBudget && (
           <div className="mt-3 flex items-center text-red-400 text-xs bg-red-400/10 p-2 rounded-lg">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">

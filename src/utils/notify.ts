@@ -40,3 +40,31 @@ export async function scheduleBudgetAlert(title: string, body: string) {
         ],
     });
 }
+
+/**
+ * Schedule a local notification for a subscription renewal (1 day before).
+ */
+export async function scheduleSubscriptionReminder(subName: string, dueDate: string) {
+    const granted = await requestPushPermission();
+    if (!granted) return;
+
+    const due = new Date(dueDate);
+    // Set reminder for 9:00 AM the day before
+    const reminderDate = new Date(due);
+    reminderDate.setDate(due.getDate() - 1);
+    reminderDate.setHours(9, 0, 0, 0);
+
+    // If reminder date is in the past, don't schedule
+    if (reminderDate.getTime() < Date.now()) return;
+
+    await LocalNotifications.schedule({
+        notifications: [
+            {
+                title: 'Subscription Renewal',
+                body: `Your ${subName} subscription is due tomorrow!`,
+                id: Math.floor(Math.random() * 1000000000),
+                schedule: { at: reminderDate },
+            },
+        ],
+    });
+}

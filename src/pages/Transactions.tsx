@@ -6,7 +6,11 @@ import SearchFilter, { FilterState } from '../components/SearchFilter';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Toast } from '../components/Toast';
 import { NoTransactionsEmpty, NoSearchResultsEmpty } from '../components/EmptyState';
-import { ListSkeleton } from '../components/Skeleton';
+import { SwipeableItem } from '../components/SwipeableItem';
+import { PullToRefresh } from '../components/PullToRefresh';
+import { HapticService } from '../services/hapticService';
+import { CalendarView } from '../components/CalendarView';
+import { exportToCSV } from '../utils/export';
 
 interface TransactionsProps {
   transactions: Transaction[];
@@ -21,6 +25,9 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
   const [syncStatus, setSyncStatus] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
   const [filters, setFilters] = useState<FilterState>({
     category: '',
     dateFrom: '',
@@ -48,16 +55,27 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
       const newTxs = await fetchAllSmsTransactions();
       if (newTxs.length > 0) {
         onBulkAdd(newTxs);
-        setSyncStatus(`Added ${newTxs.length} new transactions!`);
+        setSyncStatus(`Synced ${newTxs.length} new transactions`);
+        setToastMessage(`Synced ${newTxs.length} new transactions`);
+        setToastType('success');
+        setToastVisible(true);
+        HapticService.success();
       } else {
-        setSyncStatus('No new transactions found.');
+        setSyncStatus('No new transactions found');
+        HapticService.light();
       }
     } catch (error) {
-      console.error(error);
-      setSyncStatus('Failed to sync SMS. Check permissions.');
+      console.error('Sync failed:', error);
+      setSyncStatus('Sync failed');
+      setToastMessage('Sync failed. Please try again.');
+      setToastType('error');
+      setToastVisible(true);
+      HapticService.error();
     } finally {
-      setIsSyncing(false);
-      setTimeout(() => setSyncStatus(''), 3000);
+      setTimeout(() => {
+        setIsSyncing(false);
+        setSyncStatus('');
+      }, 2000);
     }
   };
 
@@ -66,198 +84,249 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
     if (!file) return;
 
     setIsSyncing(true);
-    setSyncStatus('Parsing Statement...');
+    setSyncStatus('Parsing file...');
+
     try {
       const newTxs = await parseStatement(file);
+
       if (newTxs.length > 0) {
         onBulkAdd(newTxs);
-        setSyncStatus(`Imported ${newTxs.length} transactions!`);
+        setSyncStatus(`Imported ${newTxs.length} transactions`);
+        setToastMessage(`Imported ${newTxs.length} transactions`);
+        setToastType('success');
+        setToastVisible(true);
+        HapticService.success();
       } else {
-        setSyncStatus('No transactions found in file.');
+        setSyncStatus('No transactions found in file');
+        HapticService.light();
       }
     } catch (error) {
-      console.error(error);
-      setSyncStatus('Failed to parse file.');
-      alert('Error parsing file. Please ensure it is a valid HDFC Statement XLS.');
+      console.error('File parse failed:', error);
+      setSyncStatus('Failed to parse file');
+      setToastMessage('Failed to parse file.');
+      setToastType('error');
+      setToastVisible(true);
+      HapticService.error();
     } finally {
-      setIsSyncing(false);
-      setTimeout(() => setSyncStatus(''), 3000);
-      if (fileInputRef.current) fileInputRef.current.value = ''; // Reset input
+      setTimeout(() => {
+        setIsSyncing(false);
+        setSyncStatus('');
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }, 2000);
     }
   };
 
-  const changeMonth = (delta: number) => {
-    const date = new Date(selectedMonth + '-01');
-    date.setMonth(date.getMonth() + delta);
-    setSelectedMonth(date.toISOString().slice(0, 7));
-  };
-
-  const formatMonth = (isoMonth: string) => {
-    const date = new Date(isoMonth + '-01');
-    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const handleExport = async () => {
+    const success = await exportToCSV(transactions);
+    if (success) {
+      setToastMessage('Export successful');
+      setToastType('success');
+      setToastVisible(true);
+      HapticService.success();
+    } else {
+      setToastMessage('Export failed');
+      setToastType('error');
+      setToastVisible(true);
+      HapticService.error();
+    }
   };
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
-      // Search by merchant
-      const matchesMerchant = t.merchant.toLowerCase().includes(searchQuery.toLowerCase());
+      // Month filter
+      if (!t.date.startsWith(selectedMonth)) return false;
 
-      // Filter by category
-      const matchesCategory = !filters.category || t.category === filters.category;
-
-      // Filter by date range (if filters are set, use them; otherwise use selectedMonth)
-      let matchesDate = true;
-      if (filters.dateFrom || filters.dateTo) {
-        const tDate = new Date(t.date);
-        if (filters.dateFrom) {
-          matchesDate = matchesDate && tDate >= new Date(filters.dateFrom);
-        }
-        if (filters.dateTo) {
-          matchesDate = matchesDate && tDate <= new Date(filters.dateTo + 'T23:59:59');
-        }
-      } else {
-        // Default month filter
-        const tMonth = new Date(t.date).toISOString().slice(0, 7);
-        matchesDate = tMonth === selectedMonth;
+      // Search query
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesSearch =
+          t.merchant.toLowerCase().includes(query) ||
+          t.category.toLowerCase().includes(query) ||
+          t.amount.toString().includes(query);
+        if (!matchesSearch) return false;
       }
 
-      // Filter by amount range
-      const matchesAmount = (!filters.amountMin || t.amount >= parseFloat(filters.amountMin)) &&
-        (!filters.amountMax || t.amount <= parseFloat(filters.amountMax));
+      // Advanced filters
+      if (filters.category && t.category !== filters.category) return false;
+      if (filters.dateFrom && t.date < filters.dateFrom) return false;
+      if (filters.dateTo && t.date > filters.dateTo) return false;
+      if (filters.amountMin && t.amount < parseFloat(filters.amountMin)) return false;
+      if (filters.amountMax && t.amount > parseFloat(filters.amountMax)) return false;
 
-      return matchesMerchant && matchesCategory && matchesDate && matchesAmount;
+      // Calendar Date Filter
+      if (viewMode === 'calendar' && selectedDate) {
+        if (!t.date.startsWith(selectedDate)) return false;
+      }
+
+      return true;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [transactions, searchQuery, filters, selectedMonth]);
+  }, [transactions, selectedMonth, searchQuery, filters, viewMode, selectedDate]);
 
-  const totalExpense = transactions
-    .filter(t => {
-      const d = new Date(t.date);
-      return d.toISOString().slice(0, 7) === selectedMonth && t.type === 'debit';
-    })
-    .reduce((acc, t) => acc + t.amount, 0);
+  // Group transactions by date for list view
+  const groupedTransactions = useMemo(() => {
+    const groups: { [key: string]: Transaction[] } = {};
+    filteredTransactions.forEach(t => {
+      const date = t.date.split('T')[0];
+      if (!groups[date]) groups[date] = [];
+      groups[date].push(t);
+    });
+    return groups;
+  }, [filteredTransactions]);
 
-  // Calculate Budget Summary for the selected month
-  const totalBudget = categories.reduce((acc, c) => acc + c.budget, 0);
-  // Total spent for the WHOLE month (regardless of filters) to show accurate budget status
-  const monthlyTotalSpent = transactions
-    .filter(t => {
-      const d = new Date(t.date);
-      return d.toISOString().slice(0, 7) === selectedMonth && t.type === 'debit';
-    })
-    .reduce((acc, t) => acc + t.amount, 0);
-
-  // Delete handlers
   const handleDeleteClick = (id: string) => {
     setTransactionToDelete(id);
     setDeleteConfirmOpen(true);
+    HapticService.medium();
   };
 
-  const handleDeleteConfirm = () => {
+  const confirmDelete = () => {
     if (transactionToDelete) {
-      const txToDelete = transactions.find(t => t.id === transactionToDelete);
-      if (txToDelete) {
-        setDeletedTransaction(txToDelete);
-        onDelete(transactionToDelete);
-        setToastMessage('Transaction deleted');
-        setToastType('success');
-        setToastVisible(true);
-      }
+      const tx = transactions.find(t => t.id === transactionToDelete);
+      setDeletedTransaction(tx || null);
+      onDelete(transactionToDelete);
+      setDeleteConfirmOpen(false);
+      setTransactionToDelete(null);
+      setToastMessage('Transaction deleted');
+      setToastType('success');
+      setToastVisible(true);
+      HapticService.heavy();
     }
-    setDeleteConfirmOpen(false);
-    setTransactionToDelete(null);
   };
 
-  const handleDeleteCancel = () => {
-    setDeleteConfirmOpen(false);
-    setTransactionToDelete(null);
-  };
-
-  const handleUndo = () => {
+  const handleUndoDelete = () => {
     if (deletedTransaction) {
       onAdd(deletedTransaction);
-      setToastMessage('Transaction restored');
-      setToastType('info');
       setDeletedTransaction(null);
+      setToastVisible(false);
+      HapticService.success();
     }
   };
 
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    setToastMessage(message);
-    setToastType(type);
-    setToastVisible(true);
+  const handleRefresh = async () => {
+    await handleSync();
   };
 
   return (
-    <div className="pb-24 pt-6 px-4 max-w-md mx-auto min-h-screen">
-      <header className="mb-6 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-white">History</h1>
-        <div className="flex gap-2">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            accept=".xls,.xlsx"
-            className="hidden"
-          />
+    <div className="pb-24 pt-6 px-4 max-w-lg mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-white">Transactions</h1>
+        <div className="flex gap-2 bg-gray-800 p-1 rounded-lg">
           <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isSyncing}
-            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 disabled:opacity-50"
+            onClick={() => {
+              setViewMode('list');
+              HapticService.light();
+            }}
+            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${viewMode === 'list' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-gray-300'}`}
           >
-            {isSyncing ? (
-              <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
-            )}
-            Upload
+            List
           </button>
           <button
-            onClick={handleSync}
-            disabled={isSyncing}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 disabled:opacity-50"
+            onClick={() => {
+              setViewMode('calendar');
+              HapticService.light();
+            }}
+            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${viewMode === 'calendar' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-gray-300'}`}
           >
-            {isSyncing ? 'Syncing...' : 'Sync SMS'}
+            Calendar
           </button>
-        </div>
-      </header>
-
-      {/* Budget Summary Card */}
-      <div className="bg-gray-800 p-4 rounded-xl mb-6 border border-gray-700 shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-2 opacity-10">
-          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor"><path d="M21.21 15.89A10 10 0 1 1 8 2.83" /><path d="M22 12A10 10 0 0 0 12 2v10z" /></svg>
-        </div>
-        <div className="flex justify-between items-end mb-2 relative z-10">
-          <div>
-            <p className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Total Spent ({formatMonth(selectedMonth)})</p>
-            <p className="text-2xl font-bold text-white mt-1">₹{monthlyTotalSpent.toLocaleString()}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-gray-400 text-xs">Budget Left</p>
-            <p className={`text-lg font-semibold ${(totalBudget - monthlyTotalSpent) < 0 ? 'text-red-400' : 'text-green-400'}`}>
-              ₹{(totalBudget - monthlyTotalSpent).toLocaleString()}
-            </p>
-          </div>
-        </div>
-        <div className="relative w-full h-2 bg-gray-700 rounded-full overflow-hidden">
-          <div
-            className={`absolute top-0 left-0 h-full rounded-full transition-all duration-500 ${monthlyTotalSpent > totalBudget ? 'bg-red-500' : monthlyTotalSpent > totalBudget * 0.9 ? 'bg-orange-500' : 'bg-blue-500'}`}
-            style={{ width: `${Math.min((monthlyTotalSpent / totalBudget) * 100, 100)}%` }}
-          ></div>
         </div>
       </div>
 
       {/* Month Selector */}
-      <div className="flex items-center justify-between bg-gray-800 p-2 rounded-lg mb-4 border border-gray-700">
-        <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-gray-700 rounded-full transition-colors">
+      <div className="flex items-center justify-between bg-gray-800 p-2 rounded-lg border border-gray-700 mb-4">
+        <button
+          onClick={() => {
+            const date = new Date(selectedMonth + '-01');
+            date.setMonth(date.getMonth() - 1);
+            setSelectedMonth(date.toISOString().slice(0, 7));
+            HapticService.selectionChanged();
+          }}
+          className="p-2 hover:bg-gray-700 rounded-full transition-colors"
+        >
           <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
         </button>
-        <span className="font-medium text-white">{formatMonth(selectedMonth)}</span>
-        <button onClick={() => changeMonth(1)} className="p-2 hover:bg-gray-700 rounded-full transition-colors">
+        <span className="font-medium text-white">
+          {new Date(selectedMonth + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+        </span>
+        <button
+          onClick={() => {
+            const date = new Date(selectedMonth + '-01');
+            date.setMonth(date.getMonth() + 1);
+            setSelectedMonth(date.toISOString().slice(0, 7));
+            HapticService.selectionChanged();
+          }}
+          className="p-2 hover:bg-gray-700 rounded-full transition-colors"
+        >
           <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
         </button>
       </div>
 
-      {/* Search & Filter Component */}
+      {viewMode === 'calendar' && (
+        <div className="mb-6 animate-in fade-in slide-in-from-top-4">
+          <CalendarView
+            transactions={transactions}
+            selectedMonth={selectedMonth}
+            onSelectDate={setSelectedDate}
+          />
+          {selectedDate && (
+            <div className="mt-4 flex justify-between items-center">
+              <h3 className="text-white font-medium">
+                {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+              </h3>
+              <button
+                onClick={() => setSelectedDate(null)}
+                className="text-xs text-blue-400"
+              >
+                Clear Selection
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="grid grid-cols-3 gap-2 mb-6">
+        <button
+          onClick={handleSync}
+          disabled={isSyncing}
+          className="flex flex-col items-center justify-center gap-1 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white py-3 rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-900/20 text-xs"
+        >
+          {isSyncing ? (
+            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          ) : (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+          )}
+          <span>Sync SMS</span>
+        </button>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isSyncing}
+          className="flex flex-col items-center justify-center gap-1 bg-gray-800 hover:bg-gray-700 active:bg-gray-600 text-white py-3 rounded-xl font-medium transition-all border border-gray-700 shadow-lg text-xs"
+        >
+          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          <span>Import</span>
+        </button>
+        <button
+          onClick={handleExport}
+          className="flex flex-col items-center justify-center gap-1 bg-gray-800 hover:bg-gray-700 active:bg-gray-600 text-white py-3 rounded-xl font-medium transition-all border border-gray-700 shadow-lg text-xs"
+        >
+          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+          <span>Export</span>
+        </button>
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileUpload}
+          accept=".csv,.txt"
+          className="hidden"
+        />
+      </div>
+
       <SearchFilter
         onSearchChange={setSearchQuery}
         onFilterChange={setFilters}
@@ -265,96 +334,76 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
         currentFilters={filters}
       />
 
-      {/* Sync Status Message */}
-      {syncStatus && (
-        <div className={`mb-4 p-3 rounded-lg text-sm flex items-center gap-2 ${syncStatus.includes('Error') || syncStatus.includes('Failed') ? 'bg-red-900/50 text-red-200 border border-red-800' : 'bg-blue-900/50 text-blue-200 border border-blue-800'}`}>
-          {syncStatus.includes('Error') || syncStatus.includes('Failed') ? (
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+      <div className="mt-6">
+        <PullToRefresh onRefresh={handleRefresh}>
+          {filteredTransactions.length === 0 ? (
+            searchQuery || filters.category || filters.dateFrom || filters.amountMin ? (
+              <NoSearchResultsEmpty onClear={() => {
+                setSearchQuery('');
+                setFilters({ category: '', dateFrom: '', dateTo: '', amountMin: '', amountMax: '' });
+                setSelectedDate(null);
+              }} />
+            ) : (
+              <NoTransactionsEmpty />
+            )
           ) : (
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div className="space-y-6">
+              {Object.entries(groupedTransactions).map(([date, txs]) => (
+                <div key={date}>
+                  <h3 className="text-gray-400 text-sm font-medium mb-3 sticky top-0 bg-gray-900/95 backdrop-blur py-2 z-10">
+                    {new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                  </h3>
+                  <div className="space-y-3">
+                    {txs.map(tx => (
+                      <SwipeableItem
+                        key={tx.id}
+                        onDelete={() => handleDeleteClick(tx.id)}
+                        threshold={80}
+                      >
+                        <div className="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center shadow-sm">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-xl">
+                              {categories.find(c => c.name === tx.category)?.icon || '💰'}
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-white">{tx.merchant}</h4>
+                              <p className="text-sm text-gray-400">{tx.category}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className={`font-bold ${tx.type === 'credit' ? 'text-green-400' : 'text-white'}`}>
+                              {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(tx.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        </div>
+                      </SwipeableItem>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
-          {syncStatus}
-        </div>
-      )}
-
-      {/* Summary Card */}
-      <div className="mb-6">
-        <div className="bg-gray-800 p-4 rounded-xl border border-gray-700">
-          <p className="text-gray-400 text-xs mb-1">Total Expense</p>
-          <p className="text-red-400 text-lg font-bold">-₹{totalExpense.toLocaleString()}</p>
-        </div>
+        </PullToRefresh>
       </div>
 
-      {/* Transactions List */}
-      <div className="space-y-3">
-        {isSyncing ? (
-          <ListSkeleton count={5} type="transaction" />
-        ) : filteredTransactions.length > 0 ? (
-          filteredTransactions.map((t) => {
-            const category = categories.find(c => c.name === t.category);
-            return (
-              <div key={t.id} className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center group hover:border-slate-600 transition-all duration-300">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl bg-slate-700" style={{ color: category?.color }}>
-                    {category?.icon || '💸'}
-                  </div>
-                  <div>
-                    <p className="text-white font-medium">{t.merchant}</p>
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                      <span>{new Date(t.date).toLocaleDateString()}</span>
-                      <span>•</span>
-                      <span>{t.category}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className={`font-bold ${t.type === 'credit' ? 'text-green-400' : 'text-white'}`}>
-                    {t.type === 'credit' ? '+' : '-'}₹{t.amount.toLocaleString()}
-                  </p>
-                  <button
-                    onClick={() => handleDeleteClick(t.id)}
-                    className="text-slate-600 hover:text-red-400 text-xs mt-1 opacity-0 group-hover:opacity-100 transition-all duration-300 font-medium"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            );
-          })
-        ) : searchQuery || filters.category || filters.dateFrom || filters.dateTo || filters.amountMin || filters.amountMax ? (
-          <NoSearchResultsEmpty onClear={() => {
-            setSearchQuery('');
-            setFilters({ category: '', dateFrom: '', dateTo: '', amountMin: '', amountMax: '' });
-          }} />
-        ) : (
-          <NoTransactionsEmpty
-            onSync={handleSync}
-            onAdd={() => window.location.hash = '/add'}
-          />
-        )}
-      </div>
-
-      {/* Confirm Dialog */}
       <ConfirmDialog
         isOpen={deleteConfirmOpen}
-        title="Delete Transaction?"
-        message="Are you sure you want to delete this transaction? You can undo this action."
-        confirmText="Delete"
-        cancelText="Cancel"
-        confirmVariant="danger"
-        onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
+        title="Delete Transaction"
+        message="Are you sure you want to delete this transaction? This action cannot be undone."
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirmOpen(false)}
       />
 
-      {/* Toast Notification */}
       <Toast
         message={toastMessage}
         type={toastType}
         isVisible={toastVisible}
         onClose={() => setToastVisible(false)}
-        actionLabel={deletedTransaction ? "Undo" : undefined}
-        onAction={deletedTransaction ? handleUndo : undefined}
-        duration={deletedTransaction ? 5000 : 3000}
+        actionLabel={deletedTransaction ? 'Undo' : undefined}
+        onAction={deletedTransaction ? handleUndoDelete : undefined}
       />
     </div>
   );

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Transaction } from '../types';
 import { detectSubscriptions, Subscription } from '../services/subscriptionService';
 import { getSubscriptions, setSubscriptions, updateSubscription, deleteSubscription, addSubscription } from '../services/subscriptionStorageService';
+import { scheduleSubscriptionReminder } from '../utils/notify';
 
 interface SubscriptionsProps {
     transactions: Transaction[];
@@ -68,6 +69,7 @@ const Subscriptions: React.FC<SubscriptionsProps> = ({ transactions }) => {
         await updateSubscription(updated);
         setSubs(prev => prev.map(s => (s.id === editingId ? updated : s)));
         setEditingId(null);
+        scheduleSubscriptionReminder(updated.merchant, updated.nextDueDate);
     };
 
     const startAdd = () => {
@@ -101,6 +103,7 @@ const Subscriptions: React.FC<SubscriptionsProps> = ({ transactions }) => {
         await addSubscription(newSub);
         setSubs(prev => [...prev, newSub]);
         setIsAdding(false);
+        scheduleSubscriptionReminder(newSub.merchant, newSub.nextDueDate);
     };
 
     const removeSub = async (id: string) => {

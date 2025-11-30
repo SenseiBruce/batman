@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { BottomNav } from './components/BottomNav';
-import { Preferences } from '@capacitor/preferences';
 import { SecureStorageService } from './services/secureStorageService';
 import Dashboard from './pages/Dashboard';
 import Insights from './pages/Insights';
@@ -10,27 +9,42 @@ import AddTransaction from './pages/AddTransaction';
 import Jarvis from './pages/Jarvis';
 import Settings from './pages/Settings';
 import Subscriptions from './pages/Subscriptions';
-import { Transaction, Category } from './types';
+import Onboarding from './pages/Onboarding';
+import { Transaction, Category, Goal } from './types';
 import { DEFAULT_CATEGORIES, CATEGORY_KEYWORDS } from './constants';
 import { fetchAllSmsTransactions } from './services/smsService';
-
+import { PageTransition } from './components/PageTransition';
 
 const App: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // YYYY-MM format
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // Load persisted data using Secure Storage on mount
   useEffect(() => {
     const loadData = async () => {
       try {
+        // Check Onboarding
+        const onboardingCompleted = await SecureStorageService.get('onboarding_completed');
+        if (!onboardingCompleted) {
+          navigate('/onboarding', { replace: true });
+        }
+
         // Transactions
         const txData = await SecureStorageService.get<Transaction[]>('transactions');
         if (txData) {
           setTransactions(txData);
         }
 
+        // Goals
+        const goalsData = await SecureStorageService.get<Goal[]>('goals');
+        if (goalsData) {
+          setGoals(goalsData);
+        }
 
         // Categories
         const catData = await SecureStorageService.get<any[]>('categories');
@@ -50,50 +64,19 @@ const App: React.FC = () => {
             }
           }
 
-          setCategories(loadedCats as Category[]);
+          setCategories(loadedCats);
         } else {
-          // No saved categories, use defaults
           setCategories(DEFAULT_CATEGORIES);
-          await SecureStorageService.set('categories', DEFAULT_CATEGORIES);
         }
-
-        setIsDataLoaded(true);
-      } catch (e) {
-        console.error('Failed to load data:', e);
-        // On error, use defaults
+      } catch (error) {
+        console.error('Failed to load data:', error);
         setCategories(DEFAULT_CATEGORIES);
+      } finally {
         setIsDataLoaded(true);
       }
     };
     loadData();
   }, []);
-
-  // Persist data to Secure Storage on change
-  useEffect(() => {
-    if (!isDataLoaded) return; // Don't save until initial data is loaded
-
-    const saveData = async () => {
-      try {
-        await SecureStorageService.set('transactions', transactions);
-      } catch (e) {
-        console.error('Failed to save transactions:', e);
-      }
-    };
-    saveData();
-  }, [transactions, isDataLoaded]);
-
-  useEffect(() => {
-    if (!isDataLoaded) return; // Don't save until initial data is loaded
-
-    const saveData = async () => {
-      try {
-        await SecureStorageService.set('categories', categories);
-      } catch (e) {
-        console.error('Failed to save categories:', e);
-      }
-    };
-    saveData();
-  }, [categories, isDataLoaded]);
 
   // Auto-sync SMS transactions on app startup
   useEffect(() => {
@@ -104,7 +87,9 @@ const App: React.FC = () => {
         if (newTxs.length > 0) {
           // Use addBulkTransactions to prevent duplicates
           setTransactions(prev => {
-            const uniqueNewTxs = newTxs.filter(newTx => !prev.some(existing => existing.id === newTx.id));
+            const existingIds = new Set(prev.map(t => t.id));
+            const uniqueNewTxs = newTxs.filter(newTx => !existingIds.has(newTx.id));
+
             if (uniqueNewTxs.length === 0) return prev;
 
             const updated = [...uniqueNewTxs, ...prev];
@@ -128,49 +113,6 @@ const App: React.FC = () => {
     return () => clearTimeout(timeoutId);
   }, []);
 
-  const addTransaction = (t: Transaction) => {
-    setTransactions(prev => {
-      const updated = [t, ...prev];
-      // Save immediately
-      SecureStorageService.set('transactions', updated).catch(e =>
-        console.error('Failed to save transaction:', e)
-      );
-      return updated;
-    });
-    // Note: We no longer update category.spent here since it's calculated dynamically per month
-  };
-
-  const addBulkTransactions = (newTxs: Transaction[]) => {
-    setTransactions(prev => {
-      // Filter out transactions that already exist
-      const uniqueNewTxs = newTxs.filter(newTx => !prev.some(existing => existing.id === newTx.id));
-
-      if (uniqueNewTxs.length === 0) return prev;
-
-      const updated = [...uniqueNewTxs, ...prev];
-      SecureStorageService.set('transactions', updated).catch(e =>
-        console.error('Failed to save transactions:', e)
-      );
-
-      return updated;
-    });
-    // Note: We no longer update category.spent here since it's calculated dynamically per month
-  };
-
-  // This function is no longer needed since we calculate spent dynamically
-  // Keeping it as a no-op for now in case it's referenced elsewhere
-  const updateCategoriesFromTransactions = (txs: Transaction[]) => {
-    // No-op: spent is now calculated dynamically per month
-  };
-
-  const deleteTransaction = (id: string) => {
-    setTransactions(prev => prev.filter(t => t.id !== id));
-  };
-
-  const updateCategory = (updatedCat: Category) => {
-    setCategories(prev => prev.map(c => c.id === updatedCat.id ? updatedCat : c));
-  };
-
   const updateTransaction = (updatedTx: Transaction) => {
     setTransactions(prev => {
       const updated = prev.map(t => t.id === updatedTx.id ? updatedTx : t);
@@ -181,12 +123,55 @@ const App: React.FC = () => {
     });
   };
 
+  const addTransaction = (tx: Transaction) => {
+    setTransactions(prev => {
+      const updated = [tx, ...prev];
+      SecureStorageService.set('transactions', updated).catch(e =>
+        console.error('Failed to save transactions:', e)
+      );
+      return updated;
+    });
+  };
+
+  const addBulkTransactions = (txs: Transaction[]) => {
+    setTransactions(prev => {
+      // Filter out duplicates based on id
+      const existingIds = new Set(prev.map(t => t.id));
+      const newUniqueTxs = txs.filter(t => !existingIds.has(t.id));
+
+      const updated = [...newUniqueTxs, ...prev];
+      SecureStorageService.set('transactions', updated).catch(e =>
+        console.error('Failed to save transactions:', e)
+      );
+      return updated;
+    });
+  };
+
+  const deleteTransaction = (id: string) => {
+    setTransactions(prev => {
+      const updated = prev.filter(t => t.id !== id);
+      SecureStorageService.set('transactions', updated).catch(e =>
+        console.error('Failed to save transactions:', e)
+      );
+      return updated;
+    });
+  };
+
+  const updateCategory = (updatedCategory: Category) => {
+    setCategories(prev => {
+      const updated = prev.map(c => c.id === updatedCategory.id ? updatedCategory : c);
+      SecureStorageService.set('categories', updated).catch(e =>
+        console.error('Failed to save categories:', e)
+      );
+      return updated;
+    });
+  };
+
   const clearTransactions = () => {
     setTransactions([]);
     SecureStorageService.remove('transactions').catch(e =>
       console.error('Failed to remove transactions:', e)
     );
-    // Note: No need to reset category.spent since it's calculated dynamically
   };
 
   const addCategory = (name: string, budget: number) => {
@@ -206,76 +191,78 @@ const App: React.FC = () => {
     });
   };
 
-  const reparseTransactions = () => {
-    setTransactions(prev => {
-      const reparsed = prev.map(tx => {
-        // Recategorize based on merchant name (same logic as SMS/statement parsing)
-        const lowerMerchant = tx.merchant.toLowerCase();
-        let newCategory = 'Other';
-
-        for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
-          if (keywords.some(k => lowerMerchant.includes(k))) {
-            newCategory = category;
-            break;
-          }
-        }
-
-        return { ...tx, category: newCategory };
-      });
-
-      SecureStorageService.set('transactions', reparsed).catch(e =>
-        console.error('Failed to save transactions:', e)
+  const addGoal = (goal: Goal) => {
+    setGoals(prev => {
+      const updated = [...prev, goal];
+      SecureStorageService.set('goals', updated).catch(e =>
+        console.error('Failed to save goals:', e)
       );
-      return reparsed;
+      return updated;
     });
-
-    alert('Transactions have been recategorized based on current keywords!');
   };
 
+  const updateGoal = (updatedGoal: Goal) => {
+    setGoals(prev => {
+      const updated = prev.map(g => g.id === updatedGoal.id ? updatedGoal : g);
+      SecureStorageService.set('goals', updated).catch(e =>
+        console.error('Failed to save goals:', e)
+      );
+      return updated;
+    });
+  };
+
+  const deleteGoal = (id: string) => {
+    setGoals(prev => {
+      const updated = prev.filter(g => g.id !== id);
+      SecureStorageService.set('goals', updated).catch(e =>
+        console.error('Failed to save goals:', e)
+      );
+      return updated;
+    });
+  };
+
+  const showBottomNav = !['/add', '/onboarding'].includes(location.pathname);
+
   return (
-    <Router>
-      <div className="bg-gray-900 text-gray-100 min-h-screen font-sans">
-        <Routes>
+    <div className="bg-gray-900 text-gray-100 min-h-screen font-sans">
+      <PageTransition>
+        <Routes location={location}>
           <Route path="/" element={
-            <>
-              <Dashboard transactions={transactions} categories={categories} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} onUpdateCategory={updateCategory} onAddCategory={addCategory} onUpdateTransaction={updateTransaction} />
-              <BottomNav />
-            </>
+            <Dashboard
+              transactions={transactions}
+              categories={categories}
+              goals={goals}
+              selectedMonth={selectedMonth}
+              onMonthChange={setSelectedMonth}
+              onUpdateCategory={updateCategory}
+              onAddCategory={addCategory}
+              onUpdateTransaction={updateTransaction}
+              onAddGoal={addGoal}
+              onUpdateGoal={updateGoal}
+              onDeleteGoal={deleteGoal}
+            />
           } />
           <Route path="/transactions" element={
-            <>
-              <Transactions transactions={transactions} categories={categories} onDelete={deleteTransaction} onAdd={addTransaction} onBulkAdd={addBulkTransactions} />
-              <BottomNav />
-            </>
+            <Transactions transactions={transactions} categories={categories} onDelete={deleteTransaction} onAdd={addTransaction} onBulkAdd={addBulkTransactions} />
           } />
           <Route path="/add" element={<AddTransaction onAdd={addTransaction} categories={categories} />} />
           <Route path="/jarvis" element={
-            <>
-              <Jarvis transactions={transactions} />
-              <BottomNav />
-            </>
+            <Jarvis transactions={transactions} />
           } />
           <Route path="/insights" element={
-            <>
-              <Insights transactions={transactions} categories={categories} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
-              <BottomNav />
-            </>
+            <Insights transactions={transactions} categories={categories} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
           } />
           <Route path="/subscriptions" element={
-            <>
-              <Subscriptions transactions={transactions} />
-              <BottomNav />
-            </>
+            <Subscriptions transactions={transactions} />
           } />
           <Route path="/settings" element={
-            <>
-              <Settings onClearTransactions={clearTransactions} />
-              <BottomNav />
-            </>
+            <Settings onClearTransactions={clearTransactions} />
           } />
+          <Route path="/onboarding" element={<Onboarding />} />
         </Routes>
-      </div>
-    </Router>
+      </PageTransition>
+      {showBottomNav && <BottomNav />}
+    </div>
   );
 };
 

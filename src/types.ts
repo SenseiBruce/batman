@@ -37,3 +37,14 @@ export interface CategorySpending {
   value: number;
   color: string;
 }
+
+export interface Goal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  savedAmount: number;
+  deadline?: string;
+  icon: string;
+  color: string;
+  isCompleted: boolean;
+}

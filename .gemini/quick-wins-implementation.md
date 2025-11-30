@@ -198,6 +198,39 @@ const handleUndo = () => {
 
 ---
 
+### 5. **Mobile Experience** 📱
+
+**Components**: `src/components/PullToRefresh.tsx`, `src/components/SwipeableItem.tsx`
+
+**Features**:
+- ✅ **Pull-to-Refresh**: Pull down on Transactions page to sync SMS
+- ✅ **Swipe-to-Delete**: Swipe left on any transaction to delete
+- ✅ **Visual Feedback**: Loading spinner on pull, red background on swipe
+- ✅ **Native Feel**: Smooth physics-based animations using `framer-motion`
+
+**Usage**:
+
+#### Pull to Refresh
+```typescript
+<PullToRefresh onRefresh={handleSync}>
+  {/* Page Content */}
+</PullToRefresh>
+```
+
+#### Swipeable Item
+```typescript
+<SwipeableItem onDelete={() => handleDelete(id)}>
+  <TransactionCard />
+</SwipeableItem>
+```
+
+**Benefits**:
+- Feels native and responsive
+- Reduces need for small buttons
+- Intuitive gestures for common actions
+
+---
+
 ## 🎯 Implementation Details
 
 ### Transactions Page Updates
@@ -255,9 +288,32 @@ const handleUndo = () => {
 )}
 ```
 
+4. **Mobile Gestures**:
+```typescript
+<PullToRefresh onRefresh={handleSync}>
+  {/* ... */}
+  <SwipeableItem onDelete={() => handleDeleteClick(t.id)}>
+    <TransactionCard />
+  </SwipeableItem>
+  {/* ... */}
+</PullToRefresh>
+```
+
 ---
 
 ## 📊 Before vs After
+
+### Mobile Experience
+
+**Before**:
+- ❌ Must click small "Sync" button
+- ❌ Must click small "Delete" button
+- ❌ Feels like a website
+
+**After**:
+- ✅ Pull down to sync (natural)
+- ✅ Swipe to delete (fast)
+- ✅ Feels like a native app
 
 ### Delete Action
 
