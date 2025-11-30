@@ -1,10 +1,27 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-const NavItem = ({ to, icon, label, active }: { to: string; icon: React.ReactNode; label: string; active: boolean }) => (
-  <Link to={to} className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${active ? 'text-blue-400' : 'text-gray-500'}`}>
-    <div className="text-xl">{icon}</div>
-    <span className="text-xs font-medium">{label}</span>
+interface NavItemProps {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  gradientFrom?: string;
+  gradientTo?: string;
+}
+
+const NavItem = ({ to, icon, label, active, gradientFrom = 'blue-400', gradientTo = 'blue-500' }: NavItemProps) => (
+  <Link
+    to={to}
+    className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-all duration-300 ${active
+        ? `text-transparent bg-clip-text bg-gradient-to-r from-${gradientFrom} to-${gradientTo}`
+        : 'text-slate-500 hover:text-slate-400'
+      }`}
+  >
+    <div className={`transition-all duration-300 ${active ? 'scale-110' : 'scale-100'}`}>
+      <div className={active ? `text-${gradientFrom}` : ''}>{icon}</div>
+    </div>
+    <span className={`text-xs font-medium ${active ? 'font-semibold' : ''}`}>{label}</span>
   </Link>
 );
 
@@ -13,54 +30,77 @@ export const BottomNav = () => {
   const p = location.pathname;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-16 bg-gray-900 border-t border-gray-800 flex items-center justify-around z-50 max-w-md mx-auto">
+    <div className="fixed bottom-0 left-0 right-0 h-16 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 flex items-center justify-around z-50 max-w-md mx-auto shadow-2xl">
       <NavItem
         to="/"
         active={p === '/'}
-        label="Budgets"
+        label="Dashboard"
+        gradientFrom="blue-400"
+        gradientTo="blue-600"
         icon={
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+          </svg>
         }
       />
       <NavItem
         to="/transactions"
         active={p === '/transactions'}
-        label="History"
+        label="Transactions"
+        gradientFrom="violet-400"
+        gradientTo="violet-600"
         icon={
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" x2="21" y1="6" y2="6" /><line x1="8" x2="21" y1="12" y2="12" /><line x1="8" x2="21" y1="18" y2="18" /><line x1="3" x2="3.01" y1="6" y2="6" /><line x1="3" x2="3.01" y1="12" y2="12" /><line x1="3" x2="3.01" y1="18" y2="18" /></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23" />
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+          </svg>
         }
       />
       <div className="relative -top-5">
-        <Link to="/add" className="flex items-center justify-center w-14 h-14 rounded-full bg-blue-500 hover:bg-blue-600 text-white shadow-lg ring-4 ring-gray-900 transition-all">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <Link
+          to="/add"
+          className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg shadow-blue-500/50 ring-4 ring-slate-900 transition-all duration-300 hover:scale-110 active:scale-95"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
         </Link>
       </div>
       <NavItem
-        to="/jarvis"
-        active={p === '/jarvis'}
-        label="Jarvis"
-        icon={
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-        }
-      />
-      <NavItem
-        to="/subscriptions"
-        active={p === '/subscriptions'}
-        label="Subs"
+        to="/insights"
+        active={p === '/insights'}
+        label="Insights"
+        gradientFrom="pink-400"
+        gradientTo="pink-600"
         icon={
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 4h16v16H4z" />
-            <path d="M4 9h16" />
-            <path d="M9 4v5" />
+            <line x1="12" y1="20" x2="12" y2="10" />
+            <line x1="18" y1="20" x2="18" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="16" />
           </svg>
         }
       />
       <NavItem
-        to="/overview"
-        active={p === '/overview'}
-        label="Overview"
+        to="/jarvis"
+        active={p === '/jarvis'}
+        label="Jarvis"
+        gradientFrom="cyan-400"
+        gradientTo="cyan-600"
         icon={
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83" /><path d="M22 12A10 10 0 0 0 12 2v10z" /></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2v-4Z" />
+            <path d="M12 16v6" />
+            <path d="M19.07 4.93 17.66 6.34" />
+            <path d="M22 12h-4" />
+            <path d="M19.07 19.07l-1.41-1.41" />
+            <path d="M4.93 19.07l1.41-1.41" />
+            <path d="M2 12h4" />
+            <path d="M4.93 4.93l1.41 1.41" />
+          </svg>
         }
       />
     </div>

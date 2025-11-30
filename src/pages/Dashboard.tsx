@@ -5,7 +5,7 @@ import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import html2canvas from 'html2canvas';
 
-interface BudgetsProps {
+interface DashboardProps {
   transactions: Transaction[];
   categories: Category[];
   selectedMonth: string; // YYYY-MM
@@ -15,7 +15,7 @@ interface BudgetsProps {
   onUpdateTransaction?: (transaction: Transaction) => void;
 }
 
-const Budgets: React.FC<BudgetsProps> = ({ transactions, categories, selectedMonth, onMonthChange, onUpdateCategory, onAddCategory, onUpdateTransaction }) => {
+const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, selectedMonth, onMonthChange, onUpdateCategory, onAddCategory, onUpdateTransaction }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState('');
   const [editAlerts, setEditAlerts] = useState(true);
@@ -155,7 +155,7 @@ const Budgets: React.FC<BudgetsProps> = ({ transactions, categories, selectedMon
       <header className="mb-6">
         <div className="flex justify-between items-center mb-3">
           <div>
-            <h1 className="text-2xl font-bold text-white">Budgets</h1>
+            <h1 className="text-2xl font-bold text-white">Dashboard</h1>
           </div>
 
           <div className="flex items-center gap-3 no-capture">
@@ -533,4 +533,4 @@ const Budgets: React.FC<BudgetsProps> = ({ transactions, categories, selectedMon
   );
 };
 
-export default Budgets;
+export default Dashboard;

@@ -5,14 +5,14 @@ import { Link } from 'react-router-dom';
 import TopMerchants from '../components/TopMerchants';
 import CategoryTrends from '../components/CategoryTrends';
 
-interface HomeProps {
+interface InsightsProps {
   transactions: Transaction[];
   categories: Category[];
   selectedMonth: string; // YYYY-MM
   onMonthChange: (month: string) => void;
 }
 
-const Home: React.FC<HomeProps> = ({ transactions, categories, selectedMonth, onMonthChange }) => {
+const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedMonth, onMonthChange }) => {
   // Parse selected month
   const [year, month] = selectedMonth.split('-').map(Number);
 
@@ -120,7 +120,7 @@ const Home: React.FC<HomeProps> = ({ transactions, categories, selectedMonth, on
       <header className="mb-6">
         <div className="flex justify-between items-center mb-3">
           <div>
-            <h1 className="text-2xl font-bold text-white">Overview</h1>
+            <h1 className="text-2xl font-bold text-white">Insights</h1>
             <Link to="/subscriptions" className="mt-2 inline-block px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-sm">Go to Subscriptions</Link>
           </div>
           <Link to="/settings" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 hover:bg-gray-700 transition-colors text-gray-300">
@@ -400,4 +400,4 @@ const Home: React.FC<HomeProps> = ({ transactions, categories, selectedMonth, on
   );
 };
 
-export default Home;
+export default Insights;

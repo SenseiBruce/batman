@@ -3,6 +3,10 @@ import { Transaction, Category } from '../types';
 import { fetchAllSmsTransactions } from '../services/smsService';
 import { parseStatement } from '../services/statementService';
 import SearchFilter, { FilterState } from '../components/SearchFilter';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { Toast } from '../components/Toast';
+import { NoTransactionsEmpty, NoSearchResultsEmpty } from '../components/EmptyState';
+import { ListSkeleton } from '../components/Skeleton';
 
 interface TransactionsProps {
   transactions: Transaction[];
@@ -24,6 +28,16 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
     amountMin: '',
     amountMax: ''
   });
+
+  // Delete confirmation state
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
+
+  // Toast state
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
+  const [deletedTransaction, setDeletedTransaction] = useState<Transaction | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -132,6 +146,47 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
     })
     .reduce((acc, t) => acc + t.amount, 0);
 
+  // Delete handlers
+  const handleDeleteClick = (id: string) => {
+    setTransactionToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (transactionToDelete) {
+      const txToDelete = transactions.find(t => t.id === transactionToDelete);
+      if (txToDelete) {
+        setDeletedTransaction(txToDelete);
+        onDelete(transactionToDelete);
+        setToastMessage('Transaction deleted');
+        setToastType('success');
+        setToastVisible(true);
+      }
+    }
+    setDeleteConfirmOpen(false);
+    setTransactionToDelete(null);
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirmOpen(false);
+    setTransactionToDelete(null);
+  };
+
+  const handleUndo = () => {
+    if (deletedTransaction) {
+      onAdd(deletedTransaction);
+      setToastMessage('Transaction restored');
+      setToastType('info');
+      setDeletedTransaction(null);
+    }
+  };
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setToastMessage(message);
+    setToastType(type);
+    setToastVisible(true);
+  };
+
   return (
     <div className="pb-24 pt-6 px-4 max-w-md mx-auto min-h-screen">
       <header className="mb-6 flex justify-between items-center">
@@ -232,18 +287,20 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
 
       {/* Transactions List */}
       <div className="space-y-3">
-        {filteredTransactions.length > 0 ? (
+        {isSyncing ? (
+          <ListSkeleton count={5} type="transaction" />
+        ) : filteredTransactions.length > 0 ? (
           filteredTransactions.map((t) => {
             const category = categories.find(c => c.name === t.category);
             return (
-              <div key={t.id} className="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center group">
+              <div key={t.id} className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center group hover:border-slate-600 transition-all duration-300">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl bg-gray-700" style={{ color: category?.color }}>
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl bg-slate-700" style={{ color: category?.color }}>
                     {category?.icon || '💸'}
                   </div>
                   <div>
                     <p className="text-white font-medium">{t.merchant}</p>
-                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
                       <span>{new Date(t.date).toLocaleDateString()}</span>
                       <span>•</span>
                       <span>{t.category}</span>
@@ -255,8 +312,8 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
                     {t.type === 'credit' ? '+' : '-'}₹{t.amount.toLocaleString()}
                   </p>
                   <button
-                    onClick={() => onDelete(t.id)}
-                    className="text-gray-600 hover:text-red-400 text-xs mt-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleDeleteClick(t.id)}
+                    className="text-slate-600 hover:text-red-400 text-xs mt-1 opacity-0 group-hover:opacity-100 transition-all duration-300 font-medium"
                   >
                     Delete
                   </button>
@@ -264,16 +321,41 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
               </div>
             );
           })
+        ) : searchQuery || filters.category || filters.dateFrom || filters.dateTo || filters.amountMin || filters.amountMax ? (
+          <NoSearchResultsEmpty onClear={() => {
+            setSearchQuery('');
+            setFilters({ category: '', dateFrom: '', dateTo: '', amountMin: '', amountMax: '' });
+          }} />
         ) : (
-          <div className="text-center py-10">
-            <div className="bg-gray-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-            </div>
-            <p className="text-gray-400">No transactions found for this month.</p>
-            <p className="text-gray-600 text-sm mt-1">Try syncing SMS or adding one manually.</p>
-          </div>
+          <NoTransactionsEmpty
+            onSync={handleSync}
+            onAdd={() => window.location.hash = '/add'}
+          />
         )}
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirmOpen}
+        title="Delete Transaction?"
+        message="Are you sure you want to delete this transaction? You can undo this action."
+        confirmText="Delete"
+        cancelText="Cancel"
+        confirmVariant="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
+
+      {/* Toast Notification */}
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        isVisible={toastVisible}
+        onClose={() => setToastVisible(false)}
+        actionLabel={deletedTransaction ? "Undo" : undefined}
+        onAction={deletedTransaction ? handleUndo : undefined}
+        duration={deletedTransaction ? 5000 : 3000}
+      />
     </div>
   );
 };

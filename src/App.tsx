@@ -3,11 +3,11 @@ import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { BottomNav } from './components/BottomNav';
 import { Preferences } from '@capacitor/preferences';
 import { SecureStorageService } from './services/secureStorageService';
-import Home from './pages/Home';
+import Dashboard from './pages/Dashboard';
+import Insights from './pages/Insights';
 import Transactions from './pages/Transactions';
 import AddTransaction from './pages/AddTransaction';
 import Jarvis from './pages/Jarvis';
-import Budgets from './pages/Budgets';
 import Settings from './pages/Settings';
 import Subscriptions from './pages/Subscriptions';
 import { Transaction, Category } from './types';
@@ -238,7 +238,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={
             <>
-              <Budgets transactions={transactions} categories={categories} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} onUpdateCategory={updateCategory} onAddCategory={addCategory} onUpdateTransaction={updateTransaction} />
+              <Dashboard transactions={transactions} categories={categories} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} onUpdateCategory={updateCategory} onAddCategory={addCategory} onUpdateTransaction={updateTransaction} />
               <BottomNav />
             </>
           } />
@@ -255,9 +255,9 @@ const App: React.FC = () => {
               <BottomNav />
             </>
           } />
-          <Route path="/overview" element={
+          <Route path="/insights" element={
             <>
-              <Home transactions={transactions} categories={categories} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
+              <Insights transactions={transactions} categories={categories} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
               <BottomNav />
             </>
           } />
