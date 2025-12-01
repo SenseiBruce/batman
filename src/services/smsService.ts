@@ -1,5 +1,6 @@
 // src/services/smsService.ts
 import { Preferences } from '@capacitor/preferences';
+import { SecureStorageService } from './secureStorageService';
 import { Transaction } from '../types';
 import { DEFAULT_CATEGORIES, CATEGORY_KEYWORDS } from '../constants';
 import { registerPlugin, Capacitor } from '@capacitor/core';
@@ -267,17 +268,37 @@ export async function fetchAllSmsTransactions(): Promise<Transaction[]> {
         throw new Error('SMS permissions not granted');
     }
     try {
-        const result = await SMSReader.getMessages({});
-        const messages: Array<{ body: string; date: string; address: string }> = result?.messages || [];
-        console.log(`📱 Total SMS messages found: ${messages.length}`);
+        // Optimization: Incremental Sync
+        const lastSyncTimeStr = await SecureStorageService.get<string>('last_sms_sync_time');
+        const lastSyncTime = lastSyncTimeStr ? parseInt(lastSyncTimeStr) : 0;
+
+        // If first run, maybe limit to last 6 months to avoid massive initial load?
+        // For now, we'll fetch all if it's the first time, but subsequent runs will be fast.
+        const filter: any = {};
+        if (lastSyncTime > 0) {
+            console.log(`🕒 Incremental Sync: Fetching SMS after ${new Date(lastSyncTime).toLocaleString()}`);
+            filter.minDate = lastSyncTime;
+        } else {
+            console.log('🕒 First Sync: Fetching all SMS messages...');
+        }
+
+        const result = await SMSReader.getMessages(filter);
+        const messages: Array<{ body: string; date: number; address: string }> = result?.messages || [];
+        console.log(`📱 Found ${messages.length} new SMS messages`);
 
         const transactions: Transaction[] = [];
         const unknownTransactions: { index: number; tx: Transaction }[] = [];
 
+        // Track max date to update sync time
+        let maxDate = lastSyncTime;
+
         // 1. Initial Parse (Keywords + Smart Rules)
         for (let i = 0; i < messages.length; i++) {
             const msg = messages[i];
-            const tx = await parseSmsToTransaction(msg.body, msg.date, msg.address);
+            // Ensure we update maxDate
+            if (msg.date > maxDate) maxDate = msg.date;
+
+            const tx = await parseSmsToTransaction(msg.body, new Date(msg.date).toISOString(), msg.address);
             if (tx) {
                 transactions.push(tx);
                 if (tx.category === 'Other') {
@@ -315,10 +336,13 @@ export async function fetchAllSmsTransactions(): Promise<Transaction[]> {
             console.log(`✅ AI Categorization complete.`);
         }
 
-        console.log(`📊 Parsed ${transactions.length} out of ${messages.length} SMS messages`);
-        if (transactions.length === 0 && messages.length > 0) {
-            console.warn('⚠️ No transactions parsed. Sample SMS might not match patterns.');
+        console.log(`📊 Parsed ${transactions.length} valid transactions`);
+
+        // Update last sync time
+        if (maxDate > lastSyncTime) {
+            await SecureStorageService.set('last_sms_sync_time', maxDate.toString());
         }
+
         return transactions;
     } catch (e) {
         console.error('Error reading SMS', e);

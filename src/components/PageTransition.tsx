@@ -10,21 +10,25 @@ const pageVariants = {
     initial: {
         opacity: 0,
         x: 20,
+        scale: 0.98
     },
     in: {
         opacity: 1,
         x: 0,
+        scale: 1
     },
     out: {
         opacity: 0,
         x: -20,
+        scale: 0.98
     },
 };
 
 const pageTransition = {
-    type: 'tween',
-    ease: 'anticipate',
-    duration: 0.3,
+    type: 'spring',
+    stiffness: 300,
+    damping: 30,
+    mass: 1,
 } as const;
 
 export const PageTransition: React.FC<PageTransitionProps> = ({ children }) => {

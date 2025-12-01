@@ -26,6 +26,7 @@ import { BudgetService } from './services/budgetService';
 import { AccountService } from './services/accountService';
 import { AuthService } from './services/authService';
 import { LockScreen } from './components/LockScreen';
+import { InteractiveBackground } from './components/InteractiveBackground';
 
 const App: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -335,6 +336,7 @@ const App: React.FC = () => {
 
   return (
     <div className="app-container">
+      <InteractiveBackground />
       {isLocked && <LockScreen onUnlock={() => setIsLocked(false)} />}
 
       <AnimatePresence mode="wait">
