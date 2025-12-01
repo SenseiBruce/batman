@@ -187,18 +187,40 @@ async function parseSmsToTransaction(smsBody: string, smsDate: string, smsFrom: 
 
     // ---- Date parsing ----
     const dateMatch = smsBody.match(dateRegex);
-    let isoDate = new Date(smsDate).toISOString();
+    let dateString: string; // Store as YYYY-MM-DD
+
     if (dateMatch) {
+        // If date is in SMS body, parse it
         try {
             const parts = dateMatch[0].split(/[-/]/);
             const day = parseInt(parts[0]);
-            const month = parseInt(parts[1]) - 1;
+            const month = parseInt(parts[1]);
             let year = parseInt(parts[2]);
             if (year < 100) year += year < 50 ? 2000 : 1900;
-            const parsed = new Date(year, month, day);
-            if (!isNaN(parsed.getTime())) isoDate = parsed.toISOString();
-        } catch { }
+            // Format as YYYY-MM-DD
+            dateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        } catch {
+            // Fallback to SMS timestamp
+            const smsTimestamp = new Date(smsDate);
+            const year = smsTimestamp.getFullYear();
+            const month = smsTimestamp.getMonth() + 1;
+            const day = smsTimestamp.getDate();
+            dateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        }
+    } else {
+        // No date in SMS body, use SMS timestamp
+        const smsTimestamp = new Date(smsDate);
+        const year = smsTimestamp.getFullYear();
+        const month = smsTimestamp.getMonth() + 1;
+        const day = smsTimestamp.getDate();
+        dateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     }
+
+    // Convert to ISO format for storage
+    // If date was parsed from SMS body, use midnight UTC; otherwise preserve SMS timestamp
+    const isoDate = dateMatch
+        ? new Date(dateString + 'T00:00:00.000Z').toISOString()
+        : new Date(smsDate).toISOString();
 
     // ---- Category determination ----
     // 1. Learned corrections

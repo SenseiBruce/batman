@@ -136,8 +136,10 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
-      // Month filter
-      if (!t.date.startsWith(selectedMonth)) return false;
+      // Month filter - handle both ISO strings and date-only formats
+      const txDate = new Date(t.date);
+      const txMonth = `${txDate.getFullYear()}-${String(txDate.getMonth() + 1).padStart(2, '0')}`;
+      if (txMonth !== selectedMonth) return false;
 
       // Search query
       if (searchQuery) {
