@@ -1,0 +1,122 @@
+# Proactive Error Prevention Policy
+
+**Priority:** 🔴 CRITICAL  
+**Trigger:** Before attempting ANY risky or complex task  
+**Enforcement:** MANDATORY
+
+## Primary Rule
+
+```
+BEFORE starting any risky task:
+1. Check error-knowledge-base.md for similar past errors
+2. If found, use the documented solution/prevention
+3. Avoid repeating past mistakes
+```
+
+## What Qualifies as "Risky"?
+
+Tasks that commonly fail or have failed before:
+- Database migrations or schema changes
+- File operations (especially bulk operations)
+- Package installations or updates
+- Configuration changes
+- API integrations
+- Complex regex operations
+- Permission/ownership changes
+- Build processes (npm, composer, etc.)
+- Git operations (especially force operations)
+- Backup/restore operations
+
+## Workflow
+
+### Before Starting Risky Task:
+
+1. **STOP and CHECK**
+   ```
+   view_file .agent/workflows/error-knowledge-base.md
+   ```
+
+2. **SEARCH** for relevant entries:
+   - Look for similar task descriptions
+   - Check tags that match your current task
+   - Review symptoms that might match
+
+3. **APPLY** documented solutions:
+   - If exact match found, use documented solution
+   - If similar error found, adapt the prevention steps
+   - Mention to user: "I found a similar past error (ERR-XXXX), applying documented solution..."
+
+4. **PROCEED** with confidence:
+   - Use proven approach from knowledge base
+   - Skip known failure paths
+   - Implement documented preventions
+
+### If No Match Found:
+
+- Proceed with task cautiously
+- If error occurs, document it (per error-resolution.rules)
+
+## Examples
+
+### Example 1: Database Migration
+**Before:**
+```
+Task: "Run database migration"
+Action: Immediately run php artisan migrate
+Result: ❌ Might fail if there's a known issue
+```
+
+**After (with this rule):**
+```
+Task: "Run database migration"
+1. Check error-knowledge-base.md
+2. Find ERR-0042: Migration fails without backup
+3. Apply: Create backup first
+4. Run migration safely
+Result: ✅ Success using documented approach
+```
+
+### Example 2: Package Installation
+**Before:**
+```
+Task: "Install npm package"
+Action: npm install package
+Result: ❌ Might fail if we've had issues before
+```
+
+**After:**
+```
+Task: "Install npm package"
+1. Check error-knowledge-base.md
+2. Find ERR-0031: Needs --legacy-peer-deps flag
+3. Apply: npm install package --legacy-peer-deps
+Result: ✅ Success on first try
+```
+
+## Benefits
+
+✅ **Prevents Repeat Errors** - Learn from past mistakes  
+✅ **Saves Time** - No trial-and-error for solved problems  
+✅ **Builds Intelligence** - Project becomes smarter over time  
+✅ **User Confidence** - Fewer failures, more reliability  
+✅ **Token Efficiency** - Avoid multiple attempts at same task
+
+## Integration with Error Resolution
+
+This rule works in tandem with `error-resolution.rules`:
+
+1. **Reactive** (error-resolution.rules): When error happens → Document it
+2. **Proactive** (THIS rule): Before risky task → Check documentation
+
+Together they create a **self-improving system**! 🔄
+
+## Knowledge Base Location
+
+**File:** `.agent/workflows/error-knowledge-base.md`
+
+## Important Notes
+
+- **Always check** even if you think you know the solution
+- **Trust the knowledge base** over intuition for documented errors
+- **Update entries** if you find better solutions
+- **Mention to user** when using documented solutions (builds trust)

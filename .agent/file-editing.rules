@@ -1,0 +1,25 @@
+# File Editing Policy
+
+## Primary Rule
+**ALWAYS use `write_to_file` with `Overwrite=true` for ALL file modifications.**
+
+## Prohibited Tools
+- ❌ Do NOT use `replace_file_content`
+- ❌ Do NOT use `multi_replace_file_content`
+
+## Required Approach
+1. ✅ View the file first with `view_file` to see current content
+2. ✅ Use `write_to_file` with `Overwrite=true` 
+3. ✅ Include the COMPLETE file content in `CodeContent`
+4. ✅ Make your changes within the full content
+5. ✅ Write the entire modified file
+
+## Why This Approach?
+- Eliminates whitespace matching issues
+- Prevents file corruption from incorrect line ranges
+- Ensures complete visibility of all changes
+- More reliable and predictable
+- Easier to verify before writing
+
+## Exception
+For CREATING new files, use `Overwrite=false` to prevent accidental overwrites.

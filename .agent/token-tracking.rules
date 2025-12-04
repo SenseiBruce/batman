@@ -1,0 +1,35 @@
+# Token Usage Reporting Policy
+
+## Primary Rule
+**ALWAYS report the percentage of tokens USED after completing each prompt.**
+
+## How to Report
+At the end of EVERY response, include a section that shows:
+
+```
+---
+**Token Usage:** [X]% used ([used] / [total] tokens)
+```
+
+## Calculation
+- Total token budget: 200,000 tokens
+- Calculate percentage used: `(used_tokens / 200000) * 100`
+- Round to 1 decimal place
+
+## Example Format
+```
+---
+**Token Usage:** 12.7% used (25,400 / 200,000 tokens)
+```
+
+## When to Report
+- ✅ After completing any user request
+- ✅ After any substantial response
+- ✅ Even for short responses
+- ✅ Always at the end of the message
+
+## Why This Matters
+- Helps user track context window usage
+- Allows planning for complex tasks
+- Prevents unexpected context limit issues
+- Provides transparency about resource consumption

@@ -1,0 +1,233 @@
+# Error Resolution & Documentation Policy
+
+**Priority:** � CRITICAL  
+**Trigger:** IMMEDIATELY after fixing ANY error  
+**Enforcement:** MANDATORY - NO EXCEPTIONS
+
+## Primary Rule
+
+```
+IMMEDIATELY after fixing ANY error:
+1. STOP - Do not proceed to next task
+2. view_file .agent/workflows/error-knowledge-base.md
+3. Add new error entry using template below
+4. write_to_file the updated knowledge base
+5. CONFIRM to user: "Error documented as ERR-XXXX in knowledge base"
+```
+
+## ⚠️ This is MANDATORY - Not Optional
+
+**You MUST document:**
+- ANY error that caused a failure
+- ANY error that required troubleshooting
+- ANY unexpected behavior that needed fixing
+- ANY issue that took more than one attempt
+
+**Even if the error seems:**
+- Small or minor
+- Already known to you
+- Easy to fix
+- Unlikely to repeat
+
+**Why?** Future agents don't have your memory. Document everything!
+
+---
+
+## Error Documentation Template
+
+```markdown
+### ERR-[NNNN]: [Category] - [Brief Description]
+
+**Severity:** [LOW | MEDIUM | HIGH | CRITICAL]  
+**Date:** YYYY-MM-DD  
+**Tags:** `tag1` `tag2` `tag3`
+
+**Symptoms:**
+- How the error appeared
+- What failed
+- Error messages (exact text)
+
+**Root Cause:**
+[Why it happened - be specific]
+
+**Solution (Step-by-Step):**
+1. [Exact command or action taken]
+2. [Second step]
+3. [Third step]
+4. [Verification step]
+
+**Prevention:**
+- How to avoid in future
+- Warning signs to watch for
+- Best practices to follow
+
+**Related Tasks:**
+- [List similar tasks that might encounter this]
+
+---
+```
+
+**IMPORTANT:** The "Solution" section should be detailed enough that a future agent can copy the exact steps without needing to debug again!
+
+---
+
+## Mandatory Workflow (NO SHORTCUTS!)
+
+### Step 1: STOP
+```
+❌ WRONG: "I fixed the error, moving on..."
+✅ CORRECT: "I fixed the error. Now I MUST document it."
+```
+
+### Step 2: VIEW Knowledge Base
+```bash
+view_file .agent/workflows/error-knowledge-base.md
+```
+**Required** - See current entries and get next ERR number
+
+### Step 3: ADD Entry
+- Assign next ERR number (e.g., ERR-0001, ERR-0002)
+- Fill out complete template
+- Include exact error messages
+- **Write detailed step-by-step solution**
+- Add relevant tags
+
+### Step 4: SAVE
+```bash
+write_to_file .agent/workflows/error-knowledge-base.md
+```
+**With Overwrite=true** and complete file content
+
+### Step 5: CONFIRM to User
+```
+✅ Documented as ERR-0042 in knowledge base.
+Future tasks involving [task type] will use this solution.
+```
+
+**This confirmation is MANDATORY!** User needs to know the system is learning.
+
+---
+
+## What Gets Documented in "Solution"
+
+The solution section MUST include:
+
+✅ **Exact commands used:**
+```bash
+npm install --legacy-peer-deps
+```
+
+✅ **Exact code changes:**
+```php
+// Changed from:
+$query->where('status', 'active');
+
+// Changed to:
+$query->where('status', '=', 'active');
+```
+
+✅ **Configuration changes:**
+```
+Updated .env:
+DB_TIMEOUT=30000
+```
+
+✅ **File paths and locations:**
+```
+Modified: /resources/views/layouts/app.blade.php
+Added line 42: @include('partials.alerts')
+```
+
+✅ **Verification steps:**
+```
+1. Run: php artisan config:clear
+2. Test: Visit /contact page
+3. Verify: No error in logs
+```
+
+**Goal:** Future agent can copy-paste the solution and succeed immediately!
+
+---
+
+## Example Documentation (GOOD)
+
+```markdown
+### ERR-0001: Laravel - Migration Foreign Key Constraint Failed
+
+**Severity:** HIGH  
+**Date:** 2025-12-04  
+**Tags:** `database` `migration` `foreign-key`
+
+**Symptoms:**
+- Running `php artisan migrate` failed
+- Error: "SQLSTATE[23000]: Cannot add foreign key constraint"
+- Occurs specifically with users table migration
+
+**Root Cause:**
+Foreign keys were created before the referenced tables existed.
+Migration order was incorrect.
+
+**Solution (Step-by-Step):**
+1. Rollback: `php artisan migrate:rollback`
+2. Reorder migrations by timestamp in filenames
+3. Ensure referenced tables are created first
+4. Run: `php artisan migrate:fresh`
+5. Verify: Check database for all tables
+
+**Prevention:**
+- Always check migration dependencies before creating foreign keys
+- Use `$table->foreignId()->constrained()` helper
+- Test migrations in order with fresh database
+
+**Related Tasks:**
+- Creating new database relationships
+- Adding foreign keys to existing tables
+- Database schema modifications
+
+---
+```
+
+**This is what future agents will see and use!** ✅
+
+---
+
+## Benefits
+
+✅ **Self-Improving System** - Each error makes the system smarter  
+✅ **Zero Trial-and-Error** - Future agents use proven solutions  
+✅ **Institutional Memory** - Knowledge survives across sessions  
+✅ **User Confidence** - Fewer repeat failures  
+✅ **Time Savings** - No re-debugging same issues
+
+---
+
+## Integration with Proactive Prevention
+
+This works with `proactive-error-prevention.rules`:
+
+1. **Reactive** (THIS rule): Error happens → Document solution
+2. **Proactive** (other rule): Before task → Check for documented solution
+
+Together = **Auto-learning loop!** 🔄
+
+---
+
+## Knowledge Base Location
+
+**File:** `.agent/workflows/error-knowledge-base.md`
+
+---
+
+## Verification Checklist
+
+After documenting error, verify:
+
+- [ ] Did you view the knowledge base first?
+- [ ] Did you assign proper ERR number?
+- [ ] Did you include exact error messages?
+- [ ] Did you write step-by-step solution?
+- [ ] Did you add prevention tips?
+- [ ] Did you save with write_to_file?
+- [ ] Did you confirm to user it was documented?
+
+**All 7 must be YES!**

@@ -1,0 +1,251 @@
+# Search Best Practices Policy
+
+**Priority:** 🔴 CRITICAL  
+**Trigger:** When searching for code, files, or content  
+**Enforcement:** MANDATORY
+
+## Primary Rule
+
+```
+ALWAYS use the appropriate search tool based on the task:
+1. For simple file searches: Use `grep_search` WITH Includes parameter
+2. For complex searches: Use `rg` command directly via run_command
+3. NEVER use `grep_search` without the Includes parameter on entire project
+```
+
+## Why This Matters
+
+The `grep_search` tool has limitations:
+- ❌ **Fails** when searching entire project without file type filters
+- ✅ **Works** when using the `Includes` parameter to filter file types
+- ❌ **Unreliable** for large codebases without filters
+
+**Solution:** Use ripgrep (`rg`) command directly for best results!
+
+---
+
+## Tool Selection Guide
+
+### Option 1: grep_search (Simple Searches)
+
+**✅ Use When:**
+- Searching specific directories
+- You know the file types
+- Simple text searches
+
+**✅ Always Include These Parameters:**
+```javascript
+grep_search(
+  Query: "search-term",
+  SearchPath: "c:/path/to/directory",
+  Includes: ["*.blade.php", "*.php", "*.js"],  // ← REQUIRED!
+  MatchPerLine: true,
+  IsRegex: false
+)
+```
+
+**❌ NEVER Do This:**
+```javascript
+// This will FAIL on large projects:
+grep_search(
+  Query: "search-term",
+  SearchPath: "c:/entire/project"  // No Includes parameter!
+)
+```
+
+---
+
+### Option 2: ripgrep via run_command (Recommended)
+
+**✅ Use When:**
+- Searching entire project
+- Complex regex patterns
+- Need reliable results
+- Performance matters
+
+**Basic Search:**
+```bash
+rg "search-term"
+```
+
+**With File Type Filter:**
+```bash
+rg "search-term" --type php
+rg "search-term" --type js
+rg "search-term" -g "*.blade.php"
+```
+
+**Case Insensitive:**
+```bash
+rg -i "search-term"
+```
+
+**Show Context (lines before/after):**
+```bash
+rg "search-term" -C 3
+```
+
+**Search Specific File:**
+```bash
+rg "search-term" path/to/file.php
+```
+
+**Count Matches:**
+```bash
+rg "search-term" --count
+```
+
+**List Files Only:**
+```bash
+rg "search-term" --files-with-matches
+```
+
+---
+
+## Common Use Cases
+
+### 1. Find All Occurrences of a Function
+
+**✅ CORRECT:**
+```bash
+run_command: rg "functionName" --type php
+```
+
+**❌ WRONG:**
+```javascript
+grep_search(Query: "functionName", SearchPath: "/project")
+```
+
+---
+
+### 2. Find in Blade Templates
+
+**✅ CORRECT (Option A - rg):**
+```bash
+run_command: rg "alert-container" -g "*.blade.php"
+```
+
+**✅ CORRECT (Option B - grep_search):**
+```javascript
+grep_search(
+  Query: "alert-container",
+  SearchPath: "/project/resources/views",
+  Includes: ["*.blade.php"]
+)
+```
+
+---
+
+### 3. Find All TODO Comments
+
+**✅ CORRECT:**
+```bash
+run_command: rg "TODO|FIXME|XXX" --type php --type js
+```
+
+---
+
+### 4. Find Function Definitions (Regex)
+
+**✅ CORRECT:**
+```bash
+run_command: rg "function\s+\w+\(" --type php
+```
+
+---
+
+### 5. Search in Specific Directory
+
+**✅ CORRECT:**
+```bash
+run_command: rg "search-term" app/Http/Controllers/
+```
+
+---
+
+## Ripgrep File Type Shortcuts
+
+```bash
+--type php        # .php files
+--type js         # .js files  
+--type css        # .css files
+--type html       # .html files
+--type json       # .json files
+--type markdown   # .md files
+
+# Custom glob patterns:
+-g "*.blade.php"  # Blade templates
+-g "*.vue"        # Vue components
+```
+
+---
+
+## Performance Tips
+
+1. **Use file type filters** - Much faster than searching everything
+2. **Search specific directories** - Don't search entire project if not needed
+3. **Use ripgrep over grep_search** - It's optimized for code search
+4. **Use literal strings when possible** - Regex is slower
+
+---
+
+## Examples
+
+### ❌ BAD - Will Likely Fail:
+```javascript
+grep_search(Query: "alert", SearchPath: "c:/project")
+```
+
+### ✅ GOOD - Will Work:
+```bash
+run_command: rg "alert" -g "*.php" -g "*.blade.php"
+```
+
+### ✅ GOOD - Will Work:
+```javascript
+grep_search(
+  Query: "alert",
+  SearchPath: "c:/project/resources/views",
+  Includes: ["*.blade.php", "*.php"]
+)
+```
+
+---
+
+## Installation Note
+
+Ripgrep installation location:
+```
+C:\Users\NEW\AppData\Local\Microsoft\WinGet\Packages\
+  BurntSushi.ripgrep.MSVC_Microsoft.Winget.Source_8wekyb3d8bbwe\
+  ripgrep-15.1.0-x86_64-pc-windows-msvc\rg.exe
+```
+
+`rg` command is available after terminal restart.
+
+---
+
+## Quick Reference
+
+| Task | Tool | Command |
+|------|------|---------|
+| Search all PHP files | `rg` | `rg "term" --type php` |
+| Search Blade files | `rg` | `rg "term" -g "*.blade.php"` |
+| Search in directory | `rg` | `rg "term" path/to/dir/` |
+| Case insensitive | `rg` | `rg -i "term"` |
+| Whole word only | `rg` | `rg -w "term"` |
+| With context | `rg` | `rg "term" -C 3` |
+| Count matches | `rg` | `rg "term" -c` |
+
+---
+
+## Summary
+
+**Default Choice: Use `rg` via run_command!**
+
+Only use `grep_search` if:
+- You're searching a small specific directory
+- You include file type filters via Includes parameter
+- You prefer JSON output format
+
+Otherwise, **always use ripgrep** for reliable, fast searches!

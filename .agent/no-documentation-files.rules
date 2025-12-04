@@ -1,0 +1,50 @@
+# No Explanation Documentation Files
+
+## Primary Rule
+**NEVER create `.md` files to document or explain what work was done.**
+
+## What NOT To Do
+❌ Do NOT create files like:
+- `CHANGES.md`
+- `IMPLEMENTATION.md`
+- `WORK_DONE.md`
+- `SUMMARY.md`
+- `README.md` (unless explicitly requested)
+- Any `.md` file that explains completed work
+
+## What TO Do Instead
+✅ Explain all work directly in the conversation response
+✅ Use clear markdown formatting in responses
+✅ Provide context and rationale inline
+✅ Answer user questions directly
+
+## Exceptions
+You MAY create `.md` files when:
+- User explicitly asks for documentation
+- Creating actual project documentation (like API docs)
+- Adding to existing knowledge bases (like `error-knowledge-base.md`)
+- Creating workflows or guides as requested
+
+## Rationale
+- Conversations are the documentation
+- Reduces file clutter
+- User can see explanations immediately
+- Easier to search conversation history
+- Less maintenance overhead
+
+## Example
+
+**❌ WRONG:**
+```
+Agent: I've updated the alerts. See ALERT_CHANGES.md for details.
+[Creates a .md file explaining the changes]
+```
+
+**✅ CORRECT:**
+```
+Agent: I've updated the alerts with the following changes:
+- Changed duration to 1200ms
+- Made it mobile responsive
+- Updated to match brand colors
+[Explains directly in the response]
+```
