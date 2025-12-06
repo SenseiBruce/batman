@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Transaction, Category } from '../types';
 import { fetchAllSmsTransactions } from '../services/smsService';
 import { parseStatement } from '../services/statementService';
@@ -12,6 +12,8 @@ import { HapticService } from '../services/hapticService';
 import { CalendarView } from '../components/CalendarView';
 import { exportToCSV } from '../utils/export';
 import { Capacitor } from '@capacitor/core';
+import { SecureStorageService } from '../services/secureStorageService';
+import { TimeCostDisplay } from '../components/TimeCostDisplay';
 
 interface TransactionsProps {
   transactions: Transaction[];
@@ -28,6 +30,13 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [hourlyWage, setHourlyWage] = useState(0);
+
+  useEffect(() => {
+    SecureStorageService.get<string>('hourly_wage').then(wage => {
+      if (wage) setHourlyWage(parseFloat(wage));
+    });
+  }, []);
 
   const [filters, setFilters] = useState<FilterState>({
     category: '',
@@ -385,6 +394,9 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
                             <p className="text-xs text-gray-500">
                               {new Date(tx.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                             </p>
+                            {hourlyWage > 0 && tx.type === 'debit' && (
+                              <TimeCostDisplay amount={tx.amount} hourlyWage={hourlyWage} className="mt-1 justify-end" />
+                            )}
                           </div>
                         </div>
                       </SwipeableItem>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { parseSms, generateId } from '../utils/parser';
 import { Transaction, Category } from '../types';
 import { DEFAULT_CATEGORIES } from '../constants';
@@ -11,13 +11,16 @@ interface AddTransactionProps {
 
 const AddTransaction: React.FC<AddTransactionProps> = ({ onAdd, categories }) => {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<'manual' | 'sms'>('sms');
+  const location = useLocation();
+  const state = location.state as { initialAmount?: number, initialMerchant?: string, initialCategory?: string } | null;
+
+  const [mode, setMode] = useState<'manual' | 'sms'>(state ? 'manual' : 'sms');
   const [smsText, setSmsText] = useState('');
 
   // Manual State
-  const [amount, setAmount] = useState('');
-  const [merchant, setMerchant] = useState('');
-  const [category, setCategory] = useState(DEFAULT_CATEGORIES[0].name);
+  const [amount, setAmount] = useState(state?.initialAmount?.toString() || '');
+  const [merchant, setMerchant] = useState(state?.initialMerchant || '');
+  const [category, setCategory] = useState(state?.initialCategory || DEFAULT_CATEGORIES[0].name);
   const [type, setType] = useState<'debit' | 'credit'>('debit');
 
   const handleSmsParse = () => {

@@ -10,12 +10,13 @@ import Transactions from './pages/Transactions';
 import AddTransaction from './pages/AddTransaction';
 import Jarvis from './pages/Jarvis';
 import Settings from './pages/Settings';
+import WishlistPage from './pages/WishlistPage';
 import Subscriptions from './pages/Subscriptions';
 import SplitBillPage from './pages/SplitBillPage';
 import BudgetSettingsPage from './pages/BudgetSettingsPage';
 import AccountsPage from './pages/AccountsPage';
 import Onboarding from './pages/Onboarding';
-import { Transaction, Category, Goal } from './types';
+import { Transaction, Category, Goal, WishlistItem } from './types';
 import { DEFAULT_CATEGORIES, CATEGORY_KEYWORDS } from './constants';
 import { fetchAllSmsTransactions } from './services/smsService';
 import { App as CapacitorApp } from '@capacitor/app';
@@ -32,6 +33,7 @@ const App: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // YYYY-MM format
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isCreateSplitModalOpen, setIsCreateSplitModalOpen] = useState(false);
@@ -78,6 +80,10 @@ const App: React.FC = () => {
         if (goalsData) {
           setGoals(goalsData);
         }
+
+        // Wishlist
+        const wishlistData = await SecureStorageService.get<WishlistItem[]>('wishlist');
+        if (wishlistData) setWishlist(wishlistData);
 
         // Categories
         const catData = await SecureStorageService.get<any[]>('categories');
@@ -332,6 +338,43 @@ const App: React.FC = () => {
     });
   };
 
+  const addWishlistItem = (item: WishlistItem) => {
+    setWishlist(prev => {
+      const updated = [item, ...prev];
+      SecureStorageService.set('wishlist', updated).catch(e => console.error('Failed to save wishlist:', e));
+      return updated;
+    });
+  };
+
+  const updateWishlistItem = (item: WishlistItem) => {
+    setWishlist(prev => {
+      const updated = prev.map(i => i.id === item.id ? item : i);
+      SecureStorageService.set('wishlist', updated).catch(e => console.error('Failed to save wishlist:', e));
+      return updated;
+    });
+  };
+
+  const deleteWishlistItem = (id: string) => {
+    setWishlist(prev => {
+      const updated = prev.filter(i => i.id !== id);
+      SecureStorageService.set('wishlist', updated).catch(e => console.error('Failed to save wishlist:', e));
+      return updated;
+    });
+  };
+
+  const handleWishlistBuy = (item: WishlistItem) => {
+    // 1. Mark as purchased
+    updateWishlistItem({ ...item, status: 'purchased' });
+    // 2. Navigate to Add Transaction with pre-filled data
+    navigate('/add', {
+      state: {
+        initialAmount: item.amount,
+        initialMerchant: item.name,
+        initialCategory: 'Shopping'
+      }
+    });
+  };
+
   const showBottomNav = !['/add', '/onboarding'].includes(location.pathname);
 
   return (
@@ -387,6 +430,15 @@ const App: React.FC = () => {
               <Settings onClearTransactions={clearTransactions} />
             } />
             <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/wishlist" element={
+              <WishlistPage
+                wishlist={wishlist}
+                onAdd={addWishlistItem}
+                onUpdate={updateWishlistItem}
+                onDelete={deleteWishlistItem}
+                onBuy={handleWishlistBuy}
+              />
+            } />
           </Routes>
         </PageTransition>
       </AnimatePresence>

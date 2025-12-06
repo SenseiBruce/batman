@@ -7,7 +7,7 @@ import { Share } from '@capacitor/share';
 import { AuthService } from '../services/authService';
 import { exportSmsDebugData } from '../services/smsService';
 import { SecureStorageService } from '../services/secureStorageService';
-import { Lock, Shield, Key, Bot } from 'lucide-react';
+import { Lock, Shield, Key, Bot, Clock } from 'lucide-react';
 
 interface SettingsProps {
   onClearTransactions?: () => void;
@@ -25,10 +25,15 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
   const [hasBiometric, setHasBiometric] = useState(false);
   const [isAppLockEnabled, setIsAppLockEnabled] = useState(false);
 
+  // Behavioral Settings State
+  const [hourlyWage, setHourlyWage] = useState('');
+  const [defaultCooldown, setDefaultCooldown] = useState('72');
+
   useEffect(() => {
     checkBiometric();
     loadApiKey();
     loadAppLockState();
+    loadBehavioralSettings();
   }, []);
 
   const checkBiometric = async () => {
@@ -39,6 +44,14 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
   const loadAppLockState = async () => {
     const enabled = await AuthService.isEnabled();
     setIsAppLockEnabled(enabled);
+  };
+
+  const loadBehavioralSettings = async () => {
+    const wage = await SecureStorageService.get<string>('hourly_wage');
+    if (wage) setHourlyWage(wage);
+
+    const cooldown = await SecureStorageService.get<string>('default_cooldown');
+    if (cooldown) setDefaultCooldown(cooldown);
   };
 
   const toggleAppLock = async () => {
@@ -68,6 +81,12 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
       setShowApiKeyModal(false);
       alert('API Key saved successfully!');
     }
+  };
+
+  const handleSaveBehavioralSettings = async () => {
+    if (hourlyWage) await SecureStorageService.set('hourly_wage', hourlyWage);
+    if (defaultCooldown) await SecureStorageService.set('default_cooldown', defaultCooldown);
+    alert('Behavioral settings saved!');
   };
 
   const handleClearData = async () => {
@@ -156,6 +175,51 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
       </header>
 
       <div className="space-y-4">
+        {/* Behavioral Settings Section */}
+        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+          <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+            <Clock className="w-5 h-5 text-orange-400" />
+            Behavioral Settings
+          </h3>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Hourly Wage Estimate ($)
+              </label>
+              <p className="text-xs text-gray-500 mb-2">Used to calculate "Life Cost" of purchases</p>
+              <input
+                type="number"
+                value={hourlyWage}
+                onChange={(e) => setHourlyWage(e.target.value)}
+                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="20"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Default Cooldown (Hours)
+              </label>
+              <p className="text-xs text-gray-500 mb-2">Wait time for impulse buys</p>
+              <input
+                type="number"
+                value={defaultCooldown}
+                onChange={(e) => setDefaultCooldown(e.target.value)}
+                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="72"
+              />
+            </div>
+
+            <button
+              onClick={handleSaveBehavioralSettings}
+              className="w-full py-2 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg transition-colors"
+            >
+              Save Behavioral Settings
+            </button>
+          </div>
+        </div>
+
         {/* AI Settings Section */}
         <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
           <h3 className="text-white font-semibold mb-3 flex items-center gap-2">

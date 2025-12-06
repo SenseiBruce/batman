@@ -110,3 +110,14 @@ export interface Friend {
   totalOwing: number; // you owe them
   addedDate: string;
 }
+
+export interface WishlistItem {
+  id: string;
+  name: string;
+  amount: number;
+  url?: string;
+  note?: string;
+  dateAdded: string; // ISO string
+  cooldownHours: number; // e.g., 24, 48, 72
+  status: 'locked' | 'unlocked' | 'purchased' | 'abandoned';
+}
