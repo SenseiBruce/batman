@@ -11,6 +11,7 @@ import AddTransaction from './pages/AddTransaction';
 import Jarvis from './pages/Jarvis';
 import Settings from './pages/Settings';
 import WishlistPage from './pages/WishlistPage';
+import Instructions from './pages/Instructions';
 import Subscriptions from './pages/Subscriptions';
 import SplitBillPage from './pages/SplitBillPage';
 import BudgetSettingsPage from './pages/BudgetSettingsPage';
@@ -439,6 +440,7 @@ const App: React.FC = () => {
                 onBuy={handleWishlistBuy}
               />
             } />
+            <Route path="/instructions" element={<Instructions />} />
           </Routes>
         </PageTransition>
       </AnimatePresence>

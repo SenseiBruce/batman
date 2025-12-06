@@ -7,7 +7,7 @@ import { Share } from '@capacitor/share';
 import { AuthService } from '../services/authService';
 import { exportSmsDebugData } from '../services/smsService';
 import { SecureStorageService } from '../services/secureStorageService';
-import { Lock, Shield, Key, Bot, Clock } from 'lucide-react';
+import { Lock, Shield, Key, Bot, Clock, BookOpen } from 'lucide-react';
 
 interface SettingsProps {
   onClearTransactions?: () => void;
@@ -322,6 +322,18 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
             Reset App Data (Full Wipe)
+          </button>
+        </div>
+
+        {/* Resources Section */}
+        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+          <h3 className="text-white font-semibold mb-2">Resources</h3>
+          <button
+            className="w-full text-left py-3 px-2 text-blue-400 hover:bg-gray-700/50 rounded transition-colors flex items-center gap-2"
+            onClick={() => navigate('/instructions')}
+          >
+            <BookOpen className="w-5 h-5" />
+            How to Use Jarvis
           </button>
         </div>
 
