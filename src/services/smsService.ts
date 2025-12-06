@@ -273,7 +273,8 @@ async function parseSmsToTransaction(smsBody: string, smsDate: string, smsFrom: 
         merchant,
         date: isoDate,
         isManual: false,
-        rawSms: smsBody
+        rawSms: smsBody,
+        isPending: true // NEW: All SMS transactions start as pending review
     };
     return tx;
 }

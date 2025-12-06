@@ -24,6 +24,7 @@ export interface Transaction {
   accountId?: string; // The account this transaction affects
   transferAccountId?: string; // For transfers: the destination account
   isTransfer?: boolean;
+  isPending?: boolean; // If true, requires user review
 }
 
 export interface BudgetConfig {

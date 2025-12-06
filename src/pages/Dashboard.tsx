@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Transaction, Category } from '../types';
-import { requestPushPermission, registerPushListeners, scheduleBudgetAlert } from '../utils/notify';
+import { requestPushPermission, registerPushListeners, scheduleBudgetAlert, schedulePendingTransactionsAlert } from '../utils/notify';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import html2canvas from 'html2canvas';
@@ -10,6 +10,7 @@ import { AnimatedNumber, AnimatedProgressBar } from '../components/AnimatedNumbe
 import { GoalsWidget } from '../components/GoalsWidget';
 import { Goal } from '../types';
 import { BudgetAnalysisCard } from '../components/BudgetAnalysisCard';
+import { TransactionReviewModal } from '../components/TransactionReviewModal';
 
 interface DashboardProps {
   transactions: Transaction[];
@@ -52,6 +53,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
+  // Transaction Review State
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const pendingTransactions = transactions.filter(t => t.isPending);
+
   const openCategoryModal = (cat: Category) => {
     setSelectedCategory(cat);
     setShowCategoryModal(true);
@@ -78,7 +83,25 @@ const Dashboard: React.FC<DashboardProps> = ({
   useEffect(() => {
     requestPushPermission();
     registerPushListeners();
+
+    // Listen for notification tap event
+    const handleOpenPendingReview = () => {
+      setShowReviewModal(true);
+    };
+
+    window.addEventListener('openPendingTransactionsReview', handleOpenPendingReview);
+
+    return () => {
+      window.removeEventListener('openPendingTransactionsReview', handleOpenPendingReview);
+    };
   }, []);
+
+  // Trigger notification when pending transactions change
+  useEffect(() => {
+    if (pendingTransactions.length > 0) {
+      schedulePendingTransactionsAlert(pendingTransactions.length);
+    }
+  }, [pendingTransactions.length]);
 
   // Keep track of categories we already notified about (to avoid spam)
   const notifiedRef = useRef<Set<string>>(new Set());
@@ -241,6 +264,22 @@ const Dashboard: React.FC<DashboardProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Pending Transactions Review Button */}
+        {pendingTransactions.length > 0 && (
+          <button
+            onClick={() => setShowReviewModal(true)}
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl mb-4 flex items-center justify-between shadow-lg shadow-blue-900/20 animate-pulse transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <span className="bg-white text-blue-600 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs">
+                {pendingTransactions.length}
+              </span>
+              <span className="font-medium">New Transactions to Review</span>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        )}
 
         {/* Month Selector */}
         <div className="flex items-center justify-between bg-gray-800 p-2 rounded-lg border border-gray-700">
@@ -604,6 +643,17 @@ const Dashboard: React.FC<DashboardProps> = ({
           );
         })}
       </div>
+
+      {/* Transaction Review Modal */}
+      <TransactionReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        pendingTransactions={pendingTransactions}
+        categories={categories}
+        onApprove={(tx) => {
+          if (onUpdateTransaction) onUpdateTransaction(tx);
+        }}
+      />
     </div>
   );
 };

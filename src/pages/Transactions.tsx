@@ -136,6 +136,9 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
+      // Exclude pending transactions (they are in the review queue)
+      if (t.isPending) return false;
+
       // Month filter - handle both ISO strings and date-only formats
       const txDate = new Date(t.date);
       const txMonth = `${txDate.getFullYear()}-${String(txDate.getMonth() + 1).padStart(2, '0')}`;
