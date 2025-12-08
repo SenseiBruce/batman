@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -13,7 +14,9 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <HashRouter>
-      <App />
+      <CurrencyProvider>
+        <App />
+      </CurrencyProvider>
     </HashRouter>
   </React.StrictMode>
 );

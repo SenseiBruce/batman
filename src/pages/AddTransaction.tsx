@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { parseSms, generateId } from '../utils/parser';
 import { Transaction, Category } from '../types';
+
 import { DEFAULT_CATEGORIES } from '../constants';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 interface AddTransactionProps {
   onAdd: (t: Transaction) => void;
@@ -12,6 +14,7 @@ interface AddTransactionProps {
 const AddTransaction: React.FC<AddTransactionProps> = ({ onAdd, categories }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { currencySymbol } = useCurrency();
   const state = location.state as { initialAmount?: number, initialMerchant?: string, initialCategory?: string } | null;
 
   const [mode, setMode] = useState<'manual' | 'sms'>(state ? 'manual' : 'sms');
@@ -124,7 +127,7 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ onAdd, categories }) =>
           <div>
             <label className="block text-sm text-gray-400 mb-1">Amount</label>
             <div className="relative">
-              <span className="absolute left-4 top-3.5 text-gray-500">₹</span>
+              <span className="absolute left-4 top-3.5 text-gray-500">{currencySymbol}</span>
               <input
                 type="number"
                 step="0.01"

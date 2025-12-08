@@ -9,7 +9,8 @@ import { exportSmsDebugData } from '../services/smsService';
 import { SecureStorageService } from '../services/secureStorageService';
 import { CloudAuthService, User } from '../services/cloudAuthService';
 import { SyncService } from '../services/syncService';
-import { Lock, Shield, Key, Bot, Clock, BookOpen, Cloud, Upload, Download, LogOut } from 'lucide-react';
+import { useCurrency, CURRENCIES, CurrencyCode } from '../contexts/CurrencyContext';
+import { Lock, Shield, Key, Bot, Clock, BookOpen, Cloud, Upload, Download, LogOut, Globe } from 'lucide-react';
 
 interface SettingsProps {
   onClearTransactions?: () => void;
@@ -28,6 +29,7 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
   const [isAppLockEnabled, setIsAppLockEnabled] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const { currencyCode, setCurrency } = useCurrency();
 
   // Behavioral Settings State
   const [hourlyWage, setHourlyWage] = useState('');
@@ -233,6 +235,32 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
       </header>
 
       <div className="space-y-4">
+        {/* Regional Settings Section */}
+        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+          <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+            <Globe className="w-5 h-5 text-teal-400" />
+            Regional Settings
+          </h3>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Currency</label>
+            <select
+              value={currencyCode}
+              onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none"
+            >
+              {Object.entries(CURRENCIES).map(([code, { symbol, name }]) => (
+                <option key={code} value={code}>
+                  {symbol} - {name} ({code})
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-2">
+              Auto-detected based on your location: {CURRENCIES[currencyCode].locale}
+            </p>
+          </div>
+        </div>
+
         {/* Behavioral Settings Section */}
         <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
           <h3 className="text-white font-semibold mb-3 flex items-center gap-2">

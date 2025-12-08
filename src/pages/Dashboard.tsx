@@ -7,6 +7,7 @@ import html2canvas from 'html2canvas';
 import { SmartInsightCard } from '../components/SmartInsightCard';
 import { generateDailyInsight } from '../services/insightService';
 import { AnimatedNumber, AnimatedProgressBar } from '../components/AnimatedNumber';
+import { useCurrency } from '../contexts/CurrencyContext';
 import { GoalsWidget } from '../components/GoalsWidget';
 import { Goal } from '../types';
 import { BudgetAnalysisCard } from '../components/BudgetAnalysisCard';
@@ -39,6 +40,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   onUpdateGoal,
   onDeleteGoal
 }) => {
+  const { currencySymbol, formatAmount } = useCurrency();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState('');
   const [editAlerts, setEditAlerts] = useState(true);
@@ -454,7 +456,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         <div className="flex-1">
                           <div className="flex justify-between items-center mb-1">
                             <span className="text-xs text-gray-400">{new Date(tx.date).toLocaleDateString()}</span>
-                            {!isEditing && <span className="font-medium text-white">₹{tx.amount.toLocaleString()}</span>}
+                            {!isEditing && <span className="font-medium text-white">{formatAmount(tx.amount)}</span>}
                           </div>
                           <p className="text-sm text-gray-200">{tx.merchant}</p>
 
@@ -524,13 +526,13 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div>
             <p className="text-gray-400 text-sm mb-1">Total Budget</p>
             <p className="text-3xl font-bold text-white">
-              <AnimatedNumber value={totalBudget} prefix="₹" duration={1200} />
+              <AnimatedNumber value={totalBudget} prefix={currencySymbol} duration={1200} />
             </p>
           </div>
           <div className="text-right">
             <p className="text-gray-400 text-sm mb-1">Total Spent</p>
             <p className={`text-2xl font-bold ${totalSpent > totalBudget ? 'text-red-400' : 'text-white'}`}>
-              <AnimatedNumber value={totalSpent} prefix="₹" duration={1200} delay={100} />
+              <AnimatedNumber value={totalSpent} prefix={currencySymbol} duration={1200} delay={100} />
             </p>
           </div>
         </div>
@@ -567,7 +569,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             let body = '';
             if (isOver) {
               title = `${cat.name} Budget Alert`;
-              body = `You have exceeded the budget by ₹${(spent - cat.budget).toLocaleString()}`;
+              body = `You have exceeded the budget by ${formatAmount(spent - cat.budget)}`;
             } else if (isCritical) {
               title = `${cat.name} Budget Alert`;
               body = `Critical: ${Math.round(percentage)}% of budget used`;
@@ -600,7 +602,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <div>
                     <p className="text-white font-semibold text-lg">{cat.name}</p>
                     <p className="text-xs text-gray-400">
-                      Spent: <span className={isOver ? 'text-red-400 font-medium' : 'text-gray-200'}>₹{spent.toLocaleString()}</span>
+                      Spent: <span className={isOver ? 'text-red-400 font-medium' : 'text-gray-200'}>{formatAmount(spent)}</span>
                     </p>
                   </div>
                 </div>
@@ -632,7 +634,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   ) : (
                     <div className="flex flex-col items-end">
                       <div className="flex items-center gap-2">
-                        <p className="text-white font-bold text-lg">₹{cat.budget.toLocaleString()}</p>
+                        <p className="text-white font-bold text-lg">{formatAmount(cat.budget)}</p>
                         <button onClick={() => handleEdit(cat)} className="text-gray-500 hover:text-blue-400">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" /></svg>
                         </button>
@@ -659,7 +661,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <>
                   {isOver && (
                     <p className="text-red-400 text-xs mt-2 flex items-center gap-1 font-medium">
-                      <span>⚠️</span> Budget exceeded by ₹{(spent - cat.budget).toLocaleString()}
+                      <span>⚠️</span> Budget exceeded by {formatAmount(spent - cat.budget)}
                     </p>
                   )}
                   {!isOver && isCritical && (

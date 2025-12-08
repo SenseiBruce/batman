@@ -27,11 +27,14 @@ import { PageTransition } from './components/PageTransition';
 import { CreateSplitModal } from './components/CreateSplitModal';
 import { BudgetService } from './services/budgetService';
 import { AccountService } from './services/accountService';
+import { SyncService } from './services/syncService';
 import { AuthService } from './services/authService';
 import { LockScreen } from './components/LockScreen';
 import { InteractiveBackground } from './components/InteractiveBackground';
 import { JarvisProvider } from './contexts/JarvisContext';
 import { JarvisNotificationBubble } from './components/JarvisNotificationBubble';
+
+// ... (existing imports)
 
 const App: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -43,6 +46,32 @@ const App: React.FC = () => {
   const [isCreateSplitModalOpen, setIsCreateSplitModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  // ... (existing effects)
+
+  // Auto-Backup with Debounce
+  useEffect(() => {
+    if (!isDataLoaded) return;
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        console.log('🔄 Auto-Backup triggered...');
+        setIsSyncing(true);
+        // Sync everything on change (Debounced)
+        await SyncService.backupToCloud();
+        console.log('✅ Auto-Backup complete');
+      } catch (error) {
+        console.error('❌ Auto-Backup failed:', error);
+      } finally {
+        setIsSyncing(false);
+      }
+    }, 5000); // 5 second debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [transactions, categories, goals, wishlist, isDataLoaded]);
+
+  // ... (rest of component)
 
   // Load persisted data using Secure Storage on mount
   useEffect(() => {

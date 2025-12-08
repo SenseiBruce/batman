@@ -14,6 +14,7 @@ import { exportToCSV } from '../utils/export';
 import { Capacitor } from '@capacitor/core';
 import { SecureStorageService } from '../services/secureStorageService';
 import { TimeCostDisplay } from '../components/TimeCostDisplay';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 interface TransactionsProps {
   transactions: Transaction[];
@@ -25,6 +26,7 @@ interface TransactionsProps {
 }
 
 const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, onDelete, onAdd, onBulkAdd, onUpdate }) => {
+  const { formatAmount } = useCurrency();
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
@@ -434,7 +436,7 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
                             </div>
                             <div className="text-right">
                               <p className={`font-bold ${tx.type === 'credit' ? 'text-green-400' : 'text-white'}`}>
-                                {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
+                                {tx.type === 'credit' ? '+' : '-'}{formatAmount(tx.amount)}
                               </p>
                               <p className="text-xs text-gray-500">
                                 {new Date(tx.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
