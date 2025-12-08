@@ -2,6 +2,7 @@ import React from 'react';
 import { Category, Transaction } from '../types';
 import { BudgetService } from '../services/budgetService';
 import { motion } from 'framer-motion';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 interface BudgetAnalysisCardProps {
     categories: Category[];
@@ -12,6 +13,7 @@ export const BudgetAnalysisCard: React.FC<BudgetAnalysisCardProps> = ({
     categories,
     transactions
 }) => {
+    const { formatAmount } = useCurrency();
     const now = new Date();
     const periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -80,8 +82,8 @@ export const BudgetAnalysisCard: React.FC<BudgetAnalysisCardProps> = ({
                     />
                 </div>
                 <div className="flex justify-between text-xs mt-2 text-gray-400">
-                    <span>₹{stats.totalSpent.toLocaleString()}</span>
-                    <span>₹{stats.totalBudget.toLocaleString()}</span>
+                    <span>{formatAmount(stats.totalSpent)}</span>
+                    <span>{formatAmount(stats.totalBudget)}</span>
                 </div>
             </div>
 
@@ -90,13 +92,13 @@ export const BudgetAnalysisCard: React.FC<BudgetAnalysisCardProps> = ({
                 <div className="bg-gray-900/50 p-3 rounded-xl">
                     <p className="text-gray-400 text-xs mb-1">Safe Daily Spend</p>
                     <p className="text-white font-bold text-lg">
-                        ₹{Math.round(stats.totalSafeSpend).toLocaleString()}
+                        {formatAmount(Math.round(stats.totalSafeSpend))}
                     </p>
                 </div>
                 <div className="bg-gray-900/50 p-3 rounded-xl">
                     <p className="text-gray-400 text-xs mb-1">Remaining</p>
                     <p className={`font-bold text-lg ${remaining < 0 ? 'text-red-400' : 'text-green-400'}`}>
-                        ₹{Math.abs(remaining).toLocaleString()}
+                        {formatAmount(Math.abs(remaining))}
                     </p>
                 </div>
             </div>

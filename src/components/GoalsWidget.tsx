@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Goal } from '../types';
 import { AnimatedNumber, AnimatedProgressBar } from './AnimatedNumber';
 import { HapticService } from '../services/hapticService';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 interface GoalsWidgetProps {
     goals: Goal[];
@@ -11,6 +12,7 @@ interface GoalsWidgetProps {
 }
 
 export const GoalsWidget: React.FC<GoalsWidgetProps> = ({ goals, onAddGoal, onUpdateGoal, onDeleteGoal }) => {
+    const { currencySymbol, formatAmount } = useCurrency();
     const [isAdding, setIsAdding] = useState(false);
     const [newGoalName, setNewGoalName] = useState('');
     const [newGoalTarget, setNewGoalTarget] = useState('');
@@ -78,7 +80,7 @@ export const GoalsWidget: React.FC<GoalsWidgetProps> = ({ goals, onAddGoal, onUp
                     />
                     <input
                         type="number"
-                        placeholder="Target Amount (₹)"
+                        placeholder={`Target Amount (${currencySymbol})`}
                         className="w-full bg-gray-700 text-white rounded-lg p-3 mb-3 outline-none focus:ring-2 focus:ring-blue-500"
                         value={newGoalTarget}
                         onChange={e => setNewGoalTarget(e.target.value)}
@@ -118,7 +120,7 @@ export const GoalsWidget: React.FC<GoalsWidgetProps> = ({ goals, onAddGoal, onUp
                                     <div>
                                         <h4 className="font-semibold text-white">{goal.name}</h4>
                                         <p className="text-xs text-gray-400">
-                                            <AnimatedNumber value={goal.savedAmount} prefix="₹" /> / ₹{goal.targetAmount.toLocaleString()}
+                                            <AnimatedNumber value={goal.savedAmount} prefix={currencySymbol} /> / {formatAmount(goal.targetAmount)}
                                         </p>
                                     </div>
                                 </div>
