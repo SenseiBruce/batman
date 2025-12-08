@@ -78,7 +78,7 @@ async function getLearnedCategory(merchant: string): Promise<string | null> {
 }
 
 /** Request SMS permissions (READ_SMS, RECEIVE_SMS) at runtime. */
-async function requestSmsPermissions(): Promise<boolean> {
+export async function requestSmsPermissions(): Promise<boolean> {
     try {
         console.log('🔐 Checking SMS permissions...');
         const status = await SMSReader.checkPermissions();
@@ -323,6 +323,9 @@ export async function fetchAllSmsTransactions(): Promise<Transaction[]> {
 
             const tx = await parseSmsToTransaction(msg.body, new Date(msg.date).toISOString(), msg.address);
             if (tx) {
+                // First Sync (lastSyncTime == 0) -> Auto Approve (isPending = false)
+                // Incremental Sync -> Require Review (isPending = true)
+                tx.isPending = lastSyncTime > 0;
                 transactions.push(tx);
                 if (tx.category === 'Other') {
                     unknownTransactions.push({ index: transactions.length - 1, tx });

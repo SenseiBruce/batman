@@ -12,6 +12,7 @@ import { GoalsWidget } from '../components/GoalsWidget';
 import { Goal } from '../types';
 import { BudgetAnalysisCard } from '../components/BudgetAnalysisCard';
 import { TransactionReviewModal } from '../components/TransactionReviewModal';
+import { requestSmsPermissions } from '../services/smsService';
 
 interface DashboardProps {
   transactions: Transaction[];

@@ -80,10 +80,13 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
         setSyncStatus('No new transactions found');
         HapticService.light();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sync failed:', error);
+      if (error.message?.includes('permission')) {
+        alert("SMS Access Required: Please enable SMS permissions in your Phone Settings -> Apps -> Batman -> Permissions.");
+      }
       setSyncStatus('Sync failed');
-      setToastMessage('Sync failed. Please try again.');
+      setToastMessage('Sync failed. Check permissions.');
       setToastType('error');
       setToastVisible(true);
       HapticService.error();
