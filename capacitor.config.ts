@@ -9,7 +9,10 @@ const config: CapacitorConfig = {
     androidScheme: 'https'
   },
   plugins: {
-    // Permissions would go here if using native plugins later
+    FirebaseAuthentication: {
+      skipNativeAuth: false,
+      providers: ['google.com']
+    }
   }
 };
 
