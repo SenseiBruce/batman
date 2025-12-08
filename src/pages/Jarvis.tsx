@@ -1,14 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { queryJarvis } from '../services/geminiService';
 import { Transaction } from '../types';
 import { SecureStorageService } from '../services/secureStorageService';
 import { HapticService } from '../services/hapticService';
-
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  text: string;
-}
+import { useJarvis } from '../contexts/JarvisContext';
 
 interface JarvisProps {
   transactions: Transaction[];
@@ -30,34 +24,48 @@ const PREDEFINED_QUERIES = [
 ];
 
 const Jarvis: React.FC<JarvisProps> = ({ transactions }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    { id: '1', role: 'assistant', text: "Hello! I'm Jarvis. I can analyze your spending habits. Tap a quick query below or ask me anything!" }
-  ]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const {
+    conversations,
+    currentConversationId,
+    isProcessing,
+    setCurrentConversationId,
+    createNewConversation,
+    deleteConversation,
+    sendMessage,
+    markResponseAsRead,
+  } = useJarvis();
+
   const [apiKey, setApiKey] = useState('');
   const [showKeyInput, setShowKeyInput] = useState(false);
   const [savedQueries, setSavedQueries] = useState<SavedQuery[]>([]);
   const [showQuickQueries, setShowQuickQueries] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showConversationList, setShowConversationList] = useState(false);
   const [queryToSave, setQueryToSave] = useState('');
   const [queryIcon, setQueryIcon] = useState('⭐');
+  const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const currentConversation = conversations.find(c => c.id === currentConversationId);
+  const messages = currentConversation?.messages || [];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Load persisted data on mount
+  // Mark as read when user is on this page
+  useEffect(() => {
+    markResponseAsRead();
+  }, [markResponseAsRead]);
+
+  // Load saved  queries and API key
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load API Key
         const key = await SecureStorageService.get<string>('gemini_api_key');
         if (key) {
           setApiKey(key);
         } else {
-          // Fallback to localStorage for migration or if not found
           const localKey = localStorage.getItem('gemini_api_key');
           if (localKey) {
             setApiKey(localKey);
@@ -67,13 +75,6 @@ const Jarvis: React.FC<JarvisProps> = ({ transactions }) => {
           }
         }
 
-        // Load Chat History
-        const history = await SecureStorageService.get<Message[]>('chat_history');
-        if (history && history.length > 0) {
-          setMessages(history);
-        }
-
-        // Load Saved Queries
         const saved = await SecureStorageService.get<SavedQuery[]>('saved_queries');
         if (saved) {
           setSavedQueries(saved);
@@ -85,17 +86,6 @@ const Jarvis: React.FC<JarvisProps> = ({ transactions }) => {
     loadData();
   }, []);
 
-  // Save messages to storage whenever they change
-  useEffect(() => {
-    if (messages.length > 1) { // Don't save if only default message
-      SecureStorageService.set('chat_history', messages).catch(e =>
-        console.error('Failed to save chat history:', e)
-      );
-    }
-    scrollToBottom();
-  }, [messages]);
-
-  // Save queries whenever they change
   useEffect(() => {
     if (savedQueries.length > 0) {
       SecureStorageService.set('saved_queries', savedQueries).catch(e =>
@@ -104,10 +94,13 @@ const Jarvis: React.FC<JarvisProps> = ({ transactions }) => {
     }
   }, [savedQueries]);
 
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   const handleSaveKey = async () => {
     if (apiKey.trim()) {
       await SecureStorageService.set('gemini_api_key', apiKey);
-      // Also keep in localStorage for now as backup/compatibility
       localStorage.setItem('gemini_api_key', apiKey);
       setShowKeyInput(false);
     }
@@ -117,22 +110,11 @@ const Jarvis: React.FC<JarvisProps> = ({ transactions }) => {
     const queryText = message || input;
     if (!queryText.trim() || !apiKey) return;
 
-    const userMsg: Message = { id: Date.now().toString(), role: 'user', text: queryText };
-    const updatedMessages = [...messages, userMsg];
-    setMessages(updatedMessages);
     setInput('');
-    setIsLoading(true);
     setShowQuickQueries(false);
 
-    try {
-      const responseText = await queryJarvis(userMsg.text, transactions, apiKey);
-      const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'assistant', text: responseText || "I couldn't analyze that." };
-      setMessages(prev => [...prev, aiMsg]);
-    } catch (e) {
-      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', text: "Error connecting to AI. Please check your API Key." }]);
-    } finally {
-      setIsLoading(false);
-    }
+    // Use context to send message (handles background processing)
+    await sendMessage(queryText, transactions, apiKey);
   };
 
   const handleQuickQuery = (queryText: string) => {
@@ -171,10 +153,31 @@ const Jarvis: React.FC<JarvisProps> = ({ transactions }) => {
   return (
     <div className="flex flex-col h-screen pb-20 bg-gray-900 text-gray-100 max-w-md mx-auto">
       <header className="p-4 border-b border-gray-800 bg-gray-900 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-blue-400 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2v-4Z" /><path d="M12 16v6" /><path d="M19.07 4.93 17.66 6.34" /><path d="M22 12h-4" /><path d="M19.07 19.07l-1.41-1.41" /><path d="M4.93 19.07l1.41-1.41" /><path d="M2 12h4" /><path d="M4.93 4.93l1.41 1.41" /></svg>
-          Jarvis AI
-        </h1>
+        <div className="flex items-center gap-2 flex-1">
+          <button
+            onClick={() => {
+              setShowConversationList(!showConversationList);
+              HapticService.light();
+            }}
+            className="p-2 bg-gray-800 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+            title="Conversations"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+
+          <div className="flex-1">
+            <h1 className="text-lg font-bold text-blue-400 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2v-4Z" /><path d="M12 16v6" /><path d="M19.07 4.93 17.66 6.34" /><path d="M22 12h-4" /><path d="M19.07 19.07l-1.41-1.41" /><path d="M4.93 19.07l1.41-1.41" /><path d="M2 12h4" /><path d="M4.93 4.93l1.41 1.41" /></svg>
+              Jarvis AI
+            </h1>
+            {currentConversation && (
+              <p className="text-xs text-gray-500 truncate">{currentConversation.title}</p>
+            )}
+          </div>
+        </div>
+
         <div className="flex gap-2">
           <button
             onClick={() => {
@@ -216,6 +219,59 @@ const Jarvis: React.FC<JarvisProps> = ({ transactions }) => {
             </button>
           </div>
           <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-xs text-blue-400 mt-2 inline-block hover:underline">Get API Key</a>
+        </div>
+      )}
+
+      {/* Conversation List Drawer */}
+      {showConversationList && (
+        <div className="p-4 border-b border-gray-800 bg-gray-900 max-h-80 overflow-y-auto">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-400">Conversations</h3>
+            <button
+              onClick={() => {
+                createNewConversation();
+                setShowConversationList(false);
+              }}
+              className="text-xs text-blue-400 flex items-center gap-1"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              New Chat
+            </button>
+          </div>
+          <div className="space-y-2">
+            {conversations.sort((a, b) => b.updatedAt - a.updatedAt).map((conv) => (
+              <div key={conv.id} className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setCurrentConversationId(conv.id);
+                    setShowConversationList(false);
+                    HapticService.light();
+                  }}
+                  className={`flex-1 text-left p-3 rounded-lg transition-all ${currentConversationId === conv.id
+                      ? 'bg-blue-900/30 border border-blue-700/50'
+                      : 'bg-gray-800 hover:bg-gray-700 border border-gray-700'
+                    }`}
+                >
+                  <p className="text-sm text-gray-300 truncate">{conv.title}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {new Date(conv.updatedAt).toLocaleDateString()} • {conv.messages.length - 1} messages
+                  </p>
+                </button>
+                {conversations.length > 1 && (
+                  <button
+                    onClick={() => deleteConversation(conv.id)}
+                    className="px-3 bg-red-900/20 hover:bg-red-900/30 border border-red-700/50 rounded-lg text-red-400"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -284,7 +340,7 @@ const Jarvis: React.FC<JarvisProps> = ({ transactions }) => {
             </div>
           </div>
         ))}
-        {isLoading && (
+        {isProcessing && (
           <div className="flex justify-start">
             <div className="bg-gray-800 rounded-2xl rounded-bl-none px-4 py-3 border border-gray-700 flex gap-1 items-center">
               <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
@@ -319,7 +375,7 @@ const Jarvis: React.FC<JarvisProps> = ({ transactions }) => {
           )}
           <button
             onClick={() => handleSend()}
-            disabled={!input.trim() || isLoading || !apiKey}
+            disabled={!input.trim() || isProcessing || !apiKey}
             className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white rounded-full p-3 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>

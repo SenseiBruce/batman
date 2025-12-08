@@ -1,13 +1,23 @@
 import { GoogleGenAI } from "@google/genai";
 import { Transaction } from "../types";
 
-export const queryJarvis = async (query: string, transactions: Transaction[], apiKey: string) => {
+interface Message {
+  role: 'user' | 'assistant';
+  text: string;
+}
+
+export const queryJarvis = async (
+  query: string,
+  transactions: Transaction[],
+  apiKey: string,
+  conversationHistory: Message[] = []
+) => {
   if (!apiKey) {
     throw new Error("API Key is missing");
   }
 
   const ai = new GoogleGenAI({ apiKey });
-  
+
   // Prepare context for the AI
   const transactionSummary = JSON.stringify(transactions.map(t => ({
     date: new Date(t.date).toLocaleDateString(),
@@ -31,17 +41,34 @@ export const queryJarvis = async (query: string, transactions: Transaction[], ap
     4. Suggest insights if you see unusual spending (e.g., "You spent 50% of your budget on Coffee").
     5. Format currency in INR (₹).
     6. Keep responses short and conversational (under 100 words unless detailed analysis is asked).
+    7. Remember the conversation context - if the user refers to "that" or "it", check previous messages.
   `;
 
   try {
+    // Build conversation with history
+    // Only include the last 10 messages to avoid token limits
+    const recentHistory = conversationHistory.slice(-10);
+
+    // Build the contents array with conversation history
+    const contents = recentHistory.map(msg => ({
+      role: msg.role === 'user' ? 'user' : 'model',
+      parts: [{ text: msg.text }]
+    }));
+
+    // Add the current query
+    contents.push({
+      role: 'user',
+      parts: [{ text: query }]
+    });
+
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: query,
+      contents: contents,
       config: {
         systemInstruction: systemInstruction,
       }
     });
-    
+
     return response.text;
   } catch (error) {
     console.error("Gemini API Error:", error);

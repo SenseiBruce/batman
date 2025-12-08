@@ -43,6 +43,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [editAmount, setEditAmount] = useState('');
   const [editAlerts, setEditAlerts] = useState(true);
   const [isSharing, setIsSharing] = useState(false);
+  const [showQuickActions, setShowQuickActions] = useState(false);
 
   // Add Category State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -209,100 +210,125 @@ const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div ref={contentRef} className="pb-24 pt-6 px-4 max-w-md mx-auto min-h-screen bg-gray-900 relative">
       <header className="mb-6">
-        <div className="flex justify-between items-center mb-3">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-          </div>
+        {/* Title and Main Actions */}
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
 
-          <div className="flex items-center gap-3 no-capture">
-            {/* Accounts Button */}
+          <div className="flex items-center gap-2 no-capture">
+            {/* Quick Actions Menu Button */}
             <button
-              onClick={() => window.location.hash = '#/accounts'}
-              className="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
-              title="Accounts"
+              onClick={() => setShowQuickActions(!showQuickActions)}
+              className="p-2.5 bg-gray-800 rounded-xl text-gray-400 hover:text-white hover:bg-gray-700 transition-all shadow-lg"
+              title="Quick Actions"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
-            </button>
-
-            {/* Budget Settings Button */}
-            <button
-              onClick={handleOpenBudgetSettings}
-              className="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
-              title="Budget Settings"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
-            </button>
-
-            {/* Add Category Button */}
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            </button>
-
-            {/* Wishlist Button */}
-            <button
-              onClick={() => window.location.hash = '#/wishlist'}
-              className="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
-              title="Wishlist / Impulse Control"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
-            </button>
-
-            {/* Settings Button */}
-            <button
-              onClick={() => window.location.hash = '#/settings'}
-              className="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
-              title="Settings"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+              </svg>
             </button>
 
             {/* Share/Save Button */}
             <button
               onClick={handleShare}
               disabled={isSharing}
-              className="p-2 bg-blue-600 rounded-full text-white hover:bg-blue-500 transition-colors shadow-lg"
+              className="p-2.5 bg-blue-600 rounded-xl text-white hover:bg-blue-500 transition-all shadow-lg"
+              title="Save/Share Budget"
             >
               {isSharing ? (
                 <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
               )}
             </button>
           </div>
         </div>
 
+        {/* Quick Actions Dropdown */}
+        {showQuickActions && (
+          <div className="mb-4 p-3 bg-gray-800 rounded-xl border border-gray-700 shadow-xl animate-in fade-in slide-in-from-top-2 no-capture">
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => { window.location.hash = '#/accounts'; setShowQuickActions(false); }}
+                className="flex flex-col items-center gap-1 p-3 bg-gray-700/50 hover:bg-gray-700 rounded-lg transition-all"
+              >
+                <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
+                <span className="text-xs text-gray-300">Accounts</span>
+              </button>
+
+              <button
+                onClick={() => { handleOpenBudgetSettings(); setShowQuickActions(false); }}
+                className="flex flex-col items-center gap-1 p-3 bg-gray-700/50 hover:bg-gray-700 rounded-lg transition-all"
+              >
+                <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
+                <span className="text-xs text-gray-300">Settings</span>
+              </button>
+
+              <button
+                onClick={() => { setShowAddModal(true); setShowQuickActions(false); }}
+                className="flex flex-col items-center gap-1 p-3 bg-gray-700/50 hover:bg-gray-700 rounded-lg transition-all"
+              >
+                <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                <span className="text-xs text-gray-300">Add</span>
+              </button>
+
+              <button
+                onClick={() => { window.location.hash = '#/wishlist'; setShowQuickActions(false); }}
+                className="flex flex-col items-center gap-1 p-3 bg-gray-700/50 hover:bg-gray-700 rounded-lg transition-all"
+              >
+                <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM12 8v4M12 16h.01" /></svg>
+                <span className="text-xs text-gray-300">Wishlist</span>
+              </button>
+
+              <button
+                onClick={() => { window.location.hash = '#/jarvis'; setShowQuickActions(false); }}
+                className="flex flex-col items-center gap-1 p-3 bg-gray-700/50 hover:bg-gray-700 rounded-lg transition-all"
+              >
+                <svg className="w-5 h-5 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                <span className="text-xs text-gray-300">Jarvis</span>
+              </button>
+
+              <button
+                onClick={() => { window.location.hash = '#/settings'; setShowQuickActions(false); }}
+                className="flex flex-col items-center gap-1 p-3 bg-gray-700/50 hover:bg-gray-700 rounded-lg transition-all"
+              >
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" /></svg>
+                <span className="text-xs text-gray-300">System</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Pending Transactions Review Button */}
         {pendingTransactions.length > 0 && (
           <button
             onClick={() => setShowReviewModal(true)}
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl mb-4 flex items-center justify-between shadow-lg shadow-blue-900/20 animate-pulse transition-all"
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white p-4 rounded-xl mb-4 flex items-center justify-between shadow-lg shadow-blue-900/30 transition-all"
           >
             <div className="flex items-center gap-3">
-              <span className="bg-white text-blue-600 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs">
+              <div className="bg-white text-blue-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-md">
                 {pendingTransactions.length}
-              </span>
-              <span className="font-medium">New Transactions to Review</span>
+              </div>
+              <div className="text-left">
+                <p className="font-semibold">New Transactions</p>
+                <p className="text-xs text-blue-100">Review & Categorize</p>
+              </div>
             </div>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
           </button>
         )}
 
         {/* Month Selector */}
-        <div className="flex items-center justify-between bg-gray-800 p-2 rounded-lg border border-gray-700">
+        <div className="flex items-center justify-between bg-gray-800 p-3 rounded-xl border border-gray-700 shadow-md">
           <button
             onClick={() => {
               const date = new Date(selectedMonth + '-01');
               date.setMonth(date.getMonth() - 1);
               onMonthChange(date.toISOString().slice(0, 7));
             }}
-            className="p-2 hover:bg-gray-700 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
           >
             <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </button>
-          <span className="font-medium text-white">
+          <span className="font-semibold text-white">
             {formatMonth(selectedMonth)}
           </span>
           <button
@@ -311,7 +337,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               date.setMonth(date.getMonth() + 1);
               onMonthChange(date.toISOString().slice(0, 7));
             }}
-            className="p-2 hover:bg-gray-700 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
           >
             <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
           </button>
@@ -493,17 +519,17 @@ const Dashboard: React.FC<DashboardProps> = ({
       )}
 
       {/* Total Budget Summary */}
-      <div className="bg-gray-800 p-5 rounded-2xl mb-6 border border-gray-700 shadow-lg">
-        <div className="flex justify-between items-end mb-2">
+      <div className="bg-gradient-to-br from-gray-800 to-gray-800/80 p-6 rounded-2xl mb-6 border border-gray-700 shadow-xl">
+        <div className="flex justify-between items-end mb-3">
           <div>
-            <p className="text-gray-400 text-sm">Total Budget</p>
-            <p className="text-2xl font-bold text-white">
+            <p className="text-gray-400 text-sm mb-1">Total Budget</p>
+            <p className="text-3xl font-bold text-white">
               <AnimatedNumber value={totalBudget} prefix="₹" duration={1200} />
             </p>
           </div>
           <div className="text-right">
-            <p className="text-gray-400 text-sm">Total Spent</p>
-            <p className={`text-xl font-semibold ${totalSpent > totalBudget ? 'text-red-400' : 'text-white'}`}>
+            <p className="text-gray-400 text-sm mb-1">Total Spent</p>
+            <p className={`text-2xl font-bold ${totalSpent > totalBudget ? 'text-red-400' : 'text-white'}`}>
               <AnimatedNumber value={totalSpent} prefix="₹" duration={1200} delay={100} />
             </p>
           </div>
@@ -563,18 +589,18 @@ const Dashboard: React.FC<DashboardProps> = ({
           return (
             <div
               key={cat.id}
-              className="bg-gray-800 p-4 rounded-xl border border-gray-700 transition-all cursor-pointer hover:border-gray-600"
+              className="bg-gray-800 p-4 rounded-xl border border-gray-700 transition-all cursor-pointer hover:border-gray-600 hover:shadow-lg"
               onClick={() => openCategoryModal(cat)}
             >
-              <div className="flex justify-between items-start mb-2">
+              <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl bg-gray-700/50" style={{ color: cat.color }}>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-gray-700/50 shadow-md" style={{ color: cat.color }}>
                     {cat.icon}
                   </div>
                   <div>
-                    <p className="text-white font-medium">{cat.name}</p>
+                    <p className="text-white font-semibold text-lg">{cat.name}</p>
                     <p className="text-xs text-gray-400">
-                      Spent: <span className={isOver ? 'text-red-400' : 'text-gray-200'}>₹{spent.toLocaleString()}</span>
+                      Spent: <span className={isOver ? 'text-red-400 font-medium' : 'text-gray-200'}>₹{spent.toLocaleString()}</span>
                     </p>
                   </div>
                 </div>
@@ -586,11 +612,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                           type="number"
                           value={editAmount}
                           onChange={(e) => setEditAmount(e.target.value)}
-                          className="w-20 bg-gray-900 border border-blue-500 rounded px-2 py-1 text-white text-sm focus:outline-none"
+                          className="w-24 bg-gray-900 border border-blue-500 rounded-lg px-3 py-1 text-white text-sm focus:outline-none"
                           autoFocus
                         />
                         <button onClick={() => handleSave(cat)} className="text-green-400 hover:text-green-300">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                         </button>
                       </div>
                       <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
@@ -606,9 +632,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                   ) : (
                     <div className="flex flex-col items-end">
                       <div className="flex items-center gap-2">
-                        <p className="text-white font-semibold">₹{cat.budget.toLocaleString()}</p>
+                        <p className="text-white font-bold text-lg">₹{cat.budget.toLocaleString()}</p>
                         <button onClick={() => handleEdit(cat)} className="text-gray-500 hover:text-blue-400">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" /></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" /></svg>
                         </button>
                       </div>
                       <div className="flex items-center gap-1">
@@ -621,7 +647,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
 
               {/* Progress Bar */}
-              <div className="relative w-full h-2 bg-gray-700 rounded-full overflow-hidden mt-2">
+              <div className="relative w-full h-2.5 bg-gray-700 rounded-full overflow-hidden">
                 <div
                   className={`absolute top-0 left-0 h-full rounded-full transition-all duration-500 ${progressColor}`}
                   style={{ width: `${percentage}%` }}
@@ -632,18 +658,18 @@ const Dashboard: React.FC<DashboardProps> = ({
               {alertsEnabled && (
                 <>
                   {isOver && (
-                    <p className="text-red-400 text-[10px] mt-1 flex items-center animate-pulse font-medium">
-                      ⚠️ Budget exceeded by ₹{(spent - cat.budget).toLocaleString()}
+                    <p className="text-red-400 text-xs mt-2 flex items-center gap-1 font-medium">
+                      <span>⚠️</span> Budget exceeded by ₹{(spent - cat.budget).toLocaleString()}
                     </p>
                   )}
                   {!isOver && isCritical && (
-                    <p className="text-orange-400 text-[10px] mt-1 font-medium">
-                      ⚠️ Critical: Used {Math.round(percentage)}% of budget ( &gt;90% )
+                    <p className="text-orange-400 text-xs mt-2 font-medium flex items-center gap-1">
+                      <span>⚠️</span> Critical: {Math.round(percentage)}% used
                     </p>
                   )}
                   {!isOver && !isCritical && isWarning && (
-                    <p className="text-yellow-500 text-[10px] mt-1 font-medium">
-                      ⚠️ Warning: Used {Math.round(percentage)}% of budget ( &gt;75% )
+                    <p className="text-yellow-500 text-xs mt-2 font-medium flex items-center gap-1">
+                      <span>⚠️</span> Warning: {Math.round(percentage)}% used
                     </p>
                   )}
                 </>
