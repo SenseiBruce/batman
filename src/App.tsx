@@ -402,7 +402,7 @@ const App: React.FC = () => {
               />
             } />
             <Route path="/transactions" element={
-              <Transactions transactions={transactions} categories={categories} onDelete={deleteTransaction} onAdd={addTransaction} onBulkAdd={addBulkTransactions} />
+              <Transactions transactions={transactions} categories={categories} onDelete={deleteTransaction} onAdd={addTransaction} onBulkAdd={addBulkTransactions} onUpdate={updateTransaction} />
             } />
             <Route path="/add" element={<AddTransaction onAdd={addTransaction} categories={categories} />} />
             <Route path="/jarvis" element={

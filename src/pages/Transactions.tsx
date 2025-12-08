@@ -21,9 +21,10 @@ interface TransactionsProps {
   onDelete: (id: string) => void;
   onAdd: (t: Transaction) => void;
   onBulkAdd: (txs: Transaction[]) => void;
+  onUpdate?: (tx: Transaction) => void;
 }
 
-const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, onDelete, onAdd, onBulkAdd }) => {
+const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, onDelete, onAdd, onBulkAdd, onUpdate }) => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
@@ -31,6 +32,9 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [hourlyWage, setHourlyWage] = useState(0);
+
+  // Category editing state
+  const [editingTransaction, setEditingTransaction] = useState<string | null>(null);
 
   useEffect(() => {
     SecureStorageService.get<string>('hourly_wage').then(wage => {
@@ -140,6 +144,19 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
       setToastType('error');
       setToastVisible(true);
       HapticService.error();
+    }
+  };
+
+  const handleCategoryChange = (transactionId: string, newCategory: string) => {
+    const transaction = transactions.find(t => t.id === transactionId);
+    if (transaction && onUpdate) {
+      const updatedTransaction = { ...transaction, category: newCategory };
+      onUpdate(updatedTransaction);
+      setEditingTransaction(null);
+      setToastMessage('Category updated');
+      setToastType('success');
+      setToastVisible(true);
+      HapticService.success();
     }
   };
 
@@ -377,26 +394,55 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
                         onDelete={() => handleDeleteClick(tx.id)}
                         threshold={80}
                       >
-                        <div className="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center shadow-sm">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-xl">
-                              {categories.find(c => c.name === tx.category)?.icon || '💰'}
+                        <div className="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-xl">
+                                {categories.find(c => c.name === tx.category)?.icon || '💰'}
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-white">{tx.merchant}</h4>
+                                {editingTransaction === tx.id ? (
+                                  <select
+                                    value={tx.category}
+                                    onChange={(e) => handleCategoryChange(tx.id, e.target.value)}
+                                    onBlur={() => setEditingTransaction(null)}
+                                    autoFocus
+                                    className="text-sm bg-gray-700 text-white border border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    {categories.map(cat => (
+                                      <option key={cat.id} value={cat.name}>
+                                        {cat.icon} {cat.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      setEditingTransaction(tx.id);
+                                      HapticService.light();
+                                    }}
+                                    className="text-sm text-gray-400 hover:text-blue-400 transition-colors flex items-center gap-1"
+                                  >
+                                    {tx.category}
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                            <div>
-                              <h4 className="font-semibold text-white">{tx.merchant}</h4>
-                              <p className="text-sm text-gray-400">{tx.category}</p>
+                            <div className="text-right">
+                              <p className={`font-bold ${tx.type === 'credit' ? 'text-green-400' : 'text-white'}`}>
+                                {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {new Date(tx.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                              {hourlyWage > 0 && tx.type === 'debit' && (
+                                <TimeCostDisplay amount={tx.amount} hourlyWage={hourlyWage} className="mt-1 justify-end" />
+                              )}
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <p className={`font-bold ${tx.type === 'credit' ? 'text-green-400' : 'text-white'}`}>
-                              {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(tx.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                            {hourlyWage > 0 && tx.type === 'debit' && (
-                              <TimeCostDisplay amount={tx.amount} hourlyWage={hourlyWage} className="mt-1 justify-end" />
-                            )}
                           </div>
                         </div>
                       </SwipeableItem>
