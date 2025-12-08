@@ -83,7 +83,7 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
     } catch (error: any) {
       console.error('Sync failed:', error);
       if (error.message?.includes('permission')) {
-        alert("SMS Access Required: Please enable SMS permissions in your Phone Settings -> Apps -> Batman -> Permissions.");
+        alert("SMS Access Required: Please enable SMS permissions in your Phone Settings -> Apps -> Jarvis Expense Tracker -> Permissions.");
       }
       setSyncStatus('Sync failed');
       setToastMessage('Sync failed. Check permissions.');
