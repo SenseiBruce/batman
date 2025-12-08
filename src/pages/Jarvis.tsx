@@ -38,6 +38,7 @@ const Jarvis: React.FC<JarvisProps> = ({ transactions }) => {
   const [apiKey, setApiKey] = useState('');
   const [showKeyInput, setShowKeyInput] = useState(false);
   const [savedQueries, setSavedQueries] = useState<SavedQuery[]>([]);
+  const [showQuickQueries, setShowQuickQueries] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [queryToSave, setQueryToSave] = useState('');
   const [queryIcon, setQueryIcon] = useState('⭐');
@@ -121,6 +122,7 @@ const Jarvis: React.FC<JarvisProps> = ({ transactions }) => {
     setMessages(updatedMessages);
     setInput('');
     setIsLoading(true);
+    setShowQuickQueries(false);
 
     try {
       const responseText = await queryJarvis(userMsg.text, transactions, apiKey);
@@ -136,6 +138,13 @@ const Jarvis: React.FC<JarvisProps> = ({ transactions }) => {
   const handleQuickQuery = (queryText: string) => {
     HapticService.light();
     handleSend(queryText);
+  };
+
+  const handleSaveCurrentInput = () => {
+    if (!input.trim()) return;
+    setQueryToSave(input);
+    setShowSaveDialog(true);
+    HapticService.light();
   };
 
   const handleSaveQuery = () => {
@@ -159,12 +168,6 @@ const Jarvis: React.FC<JarvisProps> = ({ transactions }) => {
     HapticService.medium();
   };
 
-  const handleLongPress = (queryText: string) => {
-    setQueryToSave(queryText);
-    setShowSaveDialog(true);
-    HapticService.medium();
-  };
-
   return (
     <div className="flex flex-col h-screen pb-20 bg-gray-900 text-gray-100 max-w-md mx-auto">
       <header className="p-4 border-b border-gray-800 bg-gray-900 flex justify-between items-center">
@@ -172,12 +175,26 @@ const Jarvis: React.FC<JarvisProps> = ({ transactions }) => {
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2v-4Z" /><path d="M12 16v6" /><path d="M19.07 4.93 17.66 6.34" /><path d="M22 12h-4" /><path d="M19.07 19.07l-1.41-1.41" /><path d="M4.93 19.07l1.41-1.41" /><path d="M2 12h4" /><path d="M4.93 4.93l1.41 1.41" /></svg>
           Jarvis AI
         </h1>
-        <button
-          onClick={() => setShowKeyInput(!showKeyInput)}
-          className="text-xs text-gray-500 border border-gray-700 px-2 py-1 rounded hover:bg-gray-800"
-        >
-          {showKeyInput ? 'Close' : 'API Key'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setShowQuickQueries(!showQuickQueries);
+              HapticService.light();
+            }}
+            className="text-xs text-gray-400 border border-gray-700 px-2 py-1 rounded hover:bg-gray-800 flex items-center gap-1"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Quick
+          </button>
+          <button
+            onClick={() => setShowKeyInput(!showKeyInput)}
+            className="text-xs text-gray-500 border border-gray-700 px-2 py-1 rounded hover:bg-gray-800"
+          >
+            {showKeyInput ? 'Close' : 'API Key'}
+          </button>
+        </div>
       </header>
 
       {showKeyInput && (
@@ -202,9 +219,9 @@ const Jarvis: React.FC<JarvisProps> = ({ transactions }) => {
         </div>
       )}
 
-      {/* Quick Queries Section */}
-      {messages.length <= 1 && (
-        <div className="p-4 border-b border-gray-800 bg-gray-900">
+      {/* Quick Queries Drawer */}
+      {showQuickQueries && (
+        <div className="p-4 border-b border-gray-800 bg-gray-900 max-h-80 overflow-y-auto">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-gray-400">Quick Queries</h3>
             <button
@@ -217,7 +234,7 @@ const Jarvis: React.FC<JarvisProps> = ({ transactions }) => {
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Save Query
+              New
             </button>
           </div>
           <div className="space-y-2">
@@ -225,10 +242,6 @@ const Jarvis: React.FC<JarvisProps> = ({ transactions }) => {
               <button
                 key={query.id}
                 onClick={() => handleQuickQuery(query.text)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  handleLongPress(query.text);
-                }}
                 className="w-full text-left bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg px-3 py-2 text-sm transition-colors flex items-center gap-2"
               >
                 <span className="text-lg">{query.icon}</span>
@@ -293,6 +306,17 @@ const Jarvis: React.FC<JarvisProps> = ({ transactions }) => {
             placeholder="Ask about your expenses..."
             className="flex-1 bg-gray-800 text-white rounded-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-700"
           />
+          {input.trim() && (
+            <button
+              onClick={handleSaveCurrentInput}
+              className="bg-gray-800 hover:bg-gray-700 text-gray-400 border border-gray-700 rounded-full p-3 transition-colors"
+              title="Save as quick query"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            </button>
+          )}
           <button
             onClick={() => handleSend()}
             disabled={!input.trim() || isLoading || !apiKey}
