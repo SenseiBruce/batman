@@ -17,6 +17,7 @@ import SplitBillPage from './pages/SplitBillPage';
 import BudgetSettingsPage from './pages/BudgetSettingsPage';
 import AccountsPage from './pages/AccountsPage';
 import Onboarding from './pages/Onboarding';
+import CustomReports from './pages/CustomReports';
 import { Transaction, Category, Goal, WishlistItem } from './types';
 import { DEFAULT_CATEGORIES, CATEGORY_KEYWORDS } from './constants';
 import { fetchAllSmsTransactions } from './services/smsService';
@@ -441,6 +442,13 @@ const App: React.FC = () => {
                   onUpdate={updateWishlistItem}
                   onDelete={deleteWishlistItem}
                   onBuy={handleWishlistBuy}
+                />
+              } />
+              <Route path="/custom-reports" element={
+                <CustomReports
+                  transactions={transactions}
+                  categories={categories}
+                  onBack={() => navigate('/')}
                 />
               } />
               <Route path="/instructions" element={<Instructions />} />
