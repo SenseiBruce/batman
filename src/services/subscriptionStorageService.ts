@@ -1,5 +1,6 @@
 import { SecureStorageService } from '../services/secureStorageService';
 import { Subscription } from './subscriptionService';
+import { SyncService } from './syncService';
 
 const SUBS_KEY = 'subscriptions';
 
@@ -16,6 +17,8 @@ export const getSubscriptions = async (): Promise<Subscription[]> => {
 export const setSubscriptions = async (subs: Subscription[]): Promise<void> => {
     try {
         await SecureStorageService.set(SUBS_KEY, subs);
+        // Auto-backup (non-blocking)
+        SyncService.backupToCloud().catch(e => console.warn('Subs backup bg error:', e));
     } catch (e) {
         console.error('Failed to save subscriptions:', e);
     }

@@ -306,8 +306,12 @@ export async function fetchAllSmsTransactions(): Promise<Transaction[]> {
         // For now, we'll fetch all if it's the first time, but subsequent runs will be fast.
         const filter: any = {};
         if (lastSyncTime > 0) {
-            console.log(`🕒 Incremental Sync: Fetching SMS after ${new Date(lastSyncTime).toLocaleString()}`);
-            filter.minDate = lastSyncTime;
+            // Safety Buffer: Go back 24 hours to catch late-arriving messages or timezone shifts
+            const safetyBuffer = 24 * 60 * 60 * 1000;
+            const fetchFrom = lastSyncTime - safetyBuffer;
+
+            console.log(`🕒 Incremental Sync: Fetching SMS after ${new Date(fetchFrom).toLocaleString()}`);
+            filter.minDate = fetchFrom;
         } else {
             console.log('🕒 First Sync: Fetching all SMS messages...');
         }

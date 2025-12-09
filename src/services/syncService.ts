@@ -60,7 +60,7 @@ export const SyncService = {
                 }
 
                 // Handle other data (small enough to fit in single documents)
-                const otherKeys = ['categories', 'goals', 'wishlist', 'hourly_wage', 'default_cooldown'];
+                const otherKeys = ['categories', 'goals', 'wishlist', 'hourly_wage', 'default_cooldown', 'subscriptions'];
                 for (const key of otherKeys) {
                     const data = await SecureStorageService.get(key);
                     if (data !== null) {
