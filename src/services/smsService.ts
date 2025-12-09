@@ -99,6 +99,13 @@ export async function requestSmsPermissions(): Promise<boolean> {
     }
 }
 
+export async function checkSmsPermissionsOnly(): Promise<boolean> {
+    try {
+        const status = await SMSReader.checkPermissions();
+        return status && (status.read === 'granted' || status === 'granted' || status.messages === 'granted');
+    } catch { return false; }
+}
+
 /** Parse a raw SMS text into a Transaction object */
 async function parseSmsToTransaction(smsBody: string, smsDate: string, smsFrom: string): Promise<Transaction | null> {
     // ==================== FILTERING ====================

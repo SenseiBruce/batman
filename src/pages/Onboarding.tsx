@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { SecureStorageService } from '../services/secureStorageService';
 import { HapticService } from '../services/hapticService';
+import { requestSmsPermissions } from '../services/smsService';
 
 const slides = [
     {
@@ -15,7 +16,7 @@ const slides = [
     {
         id: 2,
         title: "Auto-Track SMS",
-        description: "Jarvis automatically reads your transaction SMS messages and categorizes them for you.",
+        description: "Jarvis needs SMS access to automatically categorize transactions. Data is processed locally and never shared.",
         icon: "📩",
         color: "from-purple-500 to-pink-600"
     },
@@ -39,8 +40,18 @@ const Onboarding: React.FC = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const navigate = useNavigate();
 
-    const handleNext = () => {
+    const handleNext = async () => {
         HapticService.light();
+
+        // Specific Logic for SMS Slide (Index 1)
+        if (currentIndex === 1) {
+            try {
+                await requestSmsPermissions();
+            } catch (error) {
+                console.error("Permission request failed", error);
+            }
+        }
+
         if (currentIndex < slides.length - 1) {
             setCurrentIndex(currentIndex + 1);
         } else {
@@ -110,7 +121,7 @@ const Onboarding: React.FC = () => {
                     onClick={handleNext}
                     className={`w-full py-4 rounded-xl font-bold text-lg text-white shadow-lg transition-all active:scale-95 bg-gradient-to-r ${slides[currentIndex].color}`}
                 >
-                    {currentIndex === slides.length - 1 ? "Get Started" : "Next"}
+                    {currentIndex === slides.length - 1 ? "Get Started" : (currentIndex === 1 ? "Allow Access" : "Next")}
                 </button>
             </div>
         </div>

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Transaction, Category } from '../types';
-import { fetchAllSmsTransactions } from '../services/smsService';
+import { fetchAllSmsTransactions, checkSmsPermissionsOnly } from '../services/smsService';
 import { parseStatement } from '../services/statementService';
 import SearchFilter, { FilterState } from '../components/SearchFilter';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -37,6 +37,7 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
 
   // Category editing state
   const [editingTransaction, setEditingTransaction] = useState<string | null>(null);
+  const [showSmsDisclosure, setShowSmsDisclosure] = useState(false);
 
   useEffect(() => {
     SecureStorageService.get<string>('hourly_wage').then(wage => {
@@ -64,7 +65,17 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSync = async () => {
+  const handleSyncClick = async () => {
+    // Check if permission already granted
+    const granted = await checkSmsPermissionsOnly();
+    if (granted) {
+      executeSync();
+    } else {
+      setShowSmsDisclosure(true);
+    }
+  };
+
+  const executeSync = async () => {
     setIsSyncing(true);
     setSyncStatus('Reading SMS...');
     try {
@@ -242,7 +253,7 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
   };
 
   const handleRefresh = async () => {
-    await handleSync();
+    await handleSyncClick();
   };
 
   return (
@@ -327,7 +338,7 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
       <div className="grid grid-cols-3 gap-2 mb-6">
         {Capacitor.getPlatform() !== 'ios' && (
           <button
-            onClick={handleSync}
+            onClick={handleSyncClick}
             disabled={isSyncing}
             className="flex flex-col items-center justify-center gap-1 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white py-3 rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-900/20 text-xs"
           >
@@ -466,6 +477,23 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
         message="Are you sure you want to delete this transaction? This action cannot be undone."
         onConfirm={confirmDelete}
         onCancel={() => setDeleteConfirmOpen(false)}
+      />
+
+      {/* Prominent Disclosure for SMS Permissions */}
+      <ConfirmDialog
+        isOpen={showSmsDisclosure}
+        title="Enable Automatic Expense Tracking?"
+        message="Jarvis Expense Tracker needs access to your SMS messages to automatically detect and categorize transaction alerts from your bank. 
+        
+        This data is processed securely on your device and is never shared with third parties.
+        
+        Click 'Continue' to grant permission."
+        onConfirm={() => {
+          setShowSmsDisclosure(false);
+          executeSync();
+        }}
+        onCancel={() => setShowSmsDisclosure(false)}
+        confirmText="Continue"
       />
 
       <Toast
