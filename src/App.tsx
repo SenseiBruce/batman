@@ -33,6 +33,7 @@ import { LockScreen } from './components/LockScreen';
 import { InteractiveBackground } from './components/InteractiveBackground';
 import { JarvisProvider } from './contexts/JarvisContext';
 import { JarvisNotificationBubble } from './components/JarvisNotificationBubble';
+import { Toaster } from 'react-hot-toast';
 
 // ... (existing imports)
 
@@ -411,88 +412,107 @@ const App: React.FC = () => {
   const showBottomNav = !['/add', '/onboarding'].includes(location.pathname);
 
   return (
-    <JarvisProvider>
-      <div className="min-h-screen bg-gray-900 text-white">
-        <InteractiveBackground />
-        {isLocked && <LockScreen onUnlock={() => setIsLocked(false)} />}
+    <>
+      <Toaster
+        position="bottom-center"
+        containerStyle={{
+          zIndex: 99999,
+          bottom: 80 // Push up above BottomNav
+        }}
+        toastOptions={{
+          style: {
+            background: '#1f2937',
+            color: '#fff',
+            border: '1px solid #4b5563',
+            padding: '16px',
+            borderRadius: '12px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+          }
+        }}
+      />
+      <JarvisProvider>
+        <div className="min-h-screen bg-gray-900 text-white">
+          <InteractiveBackground />
+          {isLocked && <LockScreen onUnlock={() => setIsLocked(false)} />}
 
-        <AnimatePresence mode="wait">
-          <PageTransition>
-            <Routes location={location}>
-              <Route path="/" element={
-                <Dashboard
-                  transactions={transactions}
-                  categories={categories}
-                  goals={goals}
-                  selectedMonth={selectedMonth}
-                  onMonthChange={setSelectedMonth}
-                  onUpdateCategory={updateCategory}
-                  onAddCategory={addCategory}
-                  onUpdateTransaction={updateTransaction}
-                  onAddGoal={addGoal}
-                  onUpdateGoal={updateGoal}
-                  onDeleteGoal={deleteGoal}
-                />
-              } />
-              <Route path="/transactions" element={
-                <Transactions transactions={transactions} categories={categories} onDelete={deleteTransaction} onAdd={addTransaction} onBulkAdd={addBulkTransactions} onUpdate={updateTransaction} />
-              } />
-              <Route path="/add" element={<AddTransaction onAdd={addTransaction} categories={categories} />} />
-              <Route path="/jarvis" element={
-                <Jarvis transactions={transactions} />
-              } />
-              <Route path="/insights" element={
-                <Insights transactions={transactions} categories={categories} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
-              } />
-              <Route path="/subscriptions" element={
-                <Subscriptions transactions={transactions} />
-              } />
-              <Route path="/split-bills" element={
-                <SplitBillPage onCreateSplit={() => setIsCreateSplitModalOpen(true)} />
-              } />
-              <Route path="/budget-settings" element={
-                <BudgetSettingsPage
-                  categories={categories}
-                  onUpdateCategory={updateCategory}
-                  onBack={() => navigate('/')}
-                />
-              } />
-              <Route path="/accounts" element={
-                <AccountsPage onBack={() => navigate('/')} />
-              } />
-              <Route path="/settings" element={
-                <Settings onClearTransactions={clearTransactions} />
-              } />
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/wishlist" element={
-                <WishlistPage
-                  wishlist={wishlist}
-                  onAdd={addWishlistItem}
-                  onUpdate={updateWishlistItem}
-                  onDelete={deleteWishlistItem}
-                  onBuy={handleWishlistBuy}
-                />
-              } />
-              <Route path="/custom-reports" element={
-                <CustomReports
-                  transactions={transactions}
-                  categories={categories}
-                  onBack={() => navigate('/')}
-                />
-              } />
-              <Route path="/instructions" element={<Instructions />} />
-            </Routes>
-          </PageTransition>
-        </AnimatePresence>
-        {showBottomNav && <BottomNav />}
-        <JarvisNotificationBubble />
-        <CreateSplitModal
-          isOpen={isCreateSplitModalOpen}
-          onClose={() => setIsCreateSplitModalOpen(false)}
-          transactions={transactions}
-        />
-      </div>
-    </JarvisProvider>
+          <AnimatePresence mode="wait">
+            <PageTransition>
+              <Routes location={location}>
+                <Route path="/" element={
+                  <Dashboard
+                    transactions={transactions}
+                    categories={categories}
+                    goals={goals}
+                    selectedMonth={selectedMonth}
+                    onMonthChange={setSelectedMonth}
+                    onUpdateCategory={updateCategory}
+                    onAddCategory={addCategory}
+                    onUpdateTransaction={updateTransaction}
+                    onAddGoal={addGoal}
+                    onUpdateGoal={updateGoal}
+                    onDeleteGoal={deleteGoal}
+                  />
+                } />
+                <Route path="/transactions" element={
+                  <Transactions transactions={transactions} categories={categories} onDelete={deleteTransaction} onAdd={addTransaction} onBulkAdd={addBulkTransactions} onUpdate={updateTransaction} />
+                } />
+                <Route path="/add" element={<AddTransaction onAdd={addTransaction} categories={categories} />} />
+                <Route path="/jarvis" element={
+                  <Jarvis transactions={transactions} />
+                } />
+                <Route path="/insights" element={
+                  <Insights transactions={transactions} categories={categories} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
+                } />
+                <Route path="/subscriptions" element={
+                  <Subscriptions transactions={transactions} />
+                } />
+                <Route path="/split-bills" element={
+                  <SplitBillPage onCreateSplit={() => setIsCreateSplitModalOpen(true)} />
+                } />
+                <Route path="/budget-settings" element={
+                  <BudgetSettingsPage
+                    categories={categories}
+                    onUpdateCategory={updateCategory}
+                    onBack={() => navigate('/')}
+                  />
+                } />
+                <Route path="/accounts" element={
+                  <AccountsPage onBack={() => navigate('/')} />
+                } />
+                <Route path="/settings" element={
+                  <Settings onClearTransactions={clearTransactions} />
+                } />
+                <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/wishlist" element={
+                  <WishlistPage
+                    wishlist={wishlist}
+                    onAdd={addWishlistItem}
+                    onUpdate={updateWishlistItem}
+                    onDelete={deleteWishlistItem}
+                    onBuy={handleWishlistBuy}
+                  />
+                } />
+                <Route path="/custom-reports" element={
+                  <CustomReports
+                    transactions={transactions}
+                    categories={categories}
+                    onBack={() => navigate('/')}
+                  />
+                } />
+                <Route path="/instructions" element={<Instructions />} />
+              </Routes>
+            </PageTransition>
+          </AnimatePresence>
+          {showBottomNav && <BottomNav />}
+          <JarvisNotificationBubble />
+          <CreateSplitModal
+            isOpen={isCreateSplitModalOpen}
+            onClose={() => setIsCreateSplitModalOpen(false)}
+            transactions={transactions}
+          />
+        </div>
+      </JarvisProvider>
+    </>
   );
 };
 

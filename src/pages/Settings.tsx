@@ -11,6 +11,7 @@ import { CloudAuthService, User } from '../services/cloudAuthService';
 import { SyncService } from '../services/syncService';
 import { useCurrency, CURRENCIES, CurrencyCode } from '../contexts/CurrencyContext';
 import { Lock, Shield, Key, Bot, Clock, BookOpen, Cloud, Upload, Download, LogOut, Globe } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface SettingsProps {
   onClearTransactions?: () => void;
@@ -121,11 +122,13 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
   const handleBackup = async () => {
     if (!confirm('This will overwrite any data currently in the cloud. Continue?')) return;
     setIsSyncing(true);
+
+    const toastId = toast.loading('Backing up data...');
     try {
       await SyncService.backupToCloud();
-      alert('Backup successful!');
+      toast.success('Backup successful!', { id: toastId });
     } catch (error) {
-      alert('Backup failed.');
+      toast.error('Backup failed', { id: toastId });
     } finally {
       setIsSyncing(false);
     }
@@ -134,16 +137,18 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
   const handleRestore = async () => {
     if (!confirm('WARNING: This will overwrite ALL your local data with cloud data. This cannot be undone. Continue?')) return;
     setIsSyncing(true);
+
+    const toastId = toast.loading('Restoring from cloud...');
     try {
       const success = await SyncService.restoreFromCloud();
       if (success) {
-        alert('Restore successful! App will reload.');
-        window.location.reload();
+        toast.success('Restored! Reloading...', { id: toastId });
+        setTimeout(() => window.location.reload(), 1500);
       } else {
-        alert('No backup found.');
+        throw new Error("No backup found");
       }
-    } catch (error) {
-      alert('Restore failed.');
+    } catch (error: any) {
+      toast.error(`Restore failed: ${error.message}`, { id: toastId });
     } finally {
       setIsSyncing(false);
     }
