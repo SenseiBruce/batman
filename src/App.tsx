@@ -448,6 +448,7 @@ const App: React.FC = () => {
                     onUpdateCategory={updateCategory}
                     onAddCategory={addCategory}
                     onUpdateTransaction={updateTransaction}
+                    onDeleteTransaction={deleteTransaction}
                     onAddGoal={addGoal}
                     onUpdateGoal={updateGoal}
                     onDeleteGoal={deleteGoal}

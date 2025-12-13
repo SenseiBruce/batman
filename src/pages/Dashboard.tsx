@@ -12,6 +12,7 @@ import { GoalsWidget } from '../components/GoalsWidget';
 import { Goal } from '../types';
 import { BudgetAnalysisCard } from '../components/BudgetAnalysisCard';
 import { TransactionReviewModal } from '../components/TransactionReviewModal';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 
 
 interface DashboardProps {
@@ -23,6 +24,7 @@ interface DashboardProps {
   onUpdateCategory: (category: Category) => void;
   onAddCategory: (name: string, budget: number) => void;
   onUpdateTransaction?: (transaction: Transaction) => void;
+  onDeleteTransaction?: (id: string) => void;
   onAddGoal: (goal: Goal) => void;
   onUpdateGoal: (goal: Goal) => void;
   onDeleteGoal: (id: string) => void;
@@ -37,6 +39,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   onUpdateCategory,
   onAddCategory,
   onUpdateTransaction,
+  onDeleteTransaction,
   onAddGoal,
   onUpdateGoal,
   onDeleteGoal
@@ -60,6 +63,9 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Transaction Review State
   const [showReviewModal, setShowReviewModal] = useState(false);
   const pendingTransactions = transactions.filter(t => t.isPending);
+
+  // Delete Confirmation State
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const openCategoryModal = (cat: Category) => {
     setSelectedCategory(cat);
@@ -451,6 +457,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                     setEditingAmount('');
                   };
 
+                  const handleDeleteTransaction = () => {
+                    setConfirmDeleteId(tx.id);
+                  };
+
                   return (
                     <li key={tx.id} className="bg-gray-700/30 p-3 rounded-lg border border-gray-700">
                       <div className="flex justify-between items-start gap-2">
@@ -492,6 +502,12 @@ const Dashboard: React.FC<DashboardProps> = ({
                                   Save
                                 </button>
                                 <button
+                                  onClick={handleDeleteTransaction}
+                                  className="flex-1 py-1 px-2 bg-red-600 hover:bg-red-500 text-white text-xs rounded transition-colors"
+                                >
+                                  Delete
+                                </button>
+                                <button
                                   onClick={handleCancelEdit}
                                   className="flex-1 py-1 px-2 bg-gray-600 hover:bg-gray-500 text-white text-xs rounded transition-colors"
                                 >
@@ -520,6 +536,22 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!confirmDeleteId}
+        title="Delete Transaction"
+        message="Are you sure you want to delete this transaction? This action cannot be undone."
+        confirmVariant="danger"
+        confirmText="Delete"
+        onConfirm={() => {
+          if (confirmDeleteId && onDeleteTransaction) {
+            onDeleteTransaction(confirmDeleteId);
+          }
+          setConfirmDeleteId(null);
+        }}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
 
       {/* Total Budget Summary */}
       <div className="bg-gradient-to-br from-gray-800 to-gray-800/80 p-6 rounded-2xl mb-6 border border-gray-700 shadow-xl">
