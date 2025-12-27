@@ -13,6 +13,8 @@ import { Goal } from '../types';
 import { BudgetAnalysisCard } from '../components/BudgetAnalysisCard';
 import { TransactionReviewModal } from '../components/TransactionReviewModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { PredictionsCard } from '../components/PredictionsCard';
+
 
 
 interface DashboardProps {
@@ -340,7 +342,10 @@ const Dashboard: React.FC<DashboardProps> = ({
       </header>
 
       {/* Budget Analysis Card */}
-      <BudgetAnalysisCard categories={categories} transactions={monthlyTransactions} />
+      <BudgetAnalysisCard categories={categories} transactions={monthlyTransactions} selectedMonth={selectedMonth} />
+
+      {/* AI Predictions Card */}
+      <PredictionsCard transactions={transactions} categories={categories} selectedMonth={selectedMonth} />
 
       {/* Smart Insight Card */}
       <SmartInsightCard insight={dailyInsight} />

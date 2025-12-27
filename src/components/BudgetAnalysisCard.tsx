@@ -7,22 +7,41 @@ import { useCurrency } from '../contexts/CurrencyContext';
 interface BudgetAnalysisCardProps {
     categories: Category[];
     transactions: Transaction[];
+    selectedMonth: string;
 }
 
 export const BudgetAnalysisCard: React.FC<BudgetAnalysisCardProps> = ({
     categories,
-    transactions
+    transactions,
+    selectedMonth
 }) => {
     const { formatAmount } = useCurrency();
     const now = new Date();
-    const periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    // Parse selected month
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const periodStart = new Date(year, month - 1, 1);
+    const periodEnd = new Date(year, month, 0);
+
+    const isCurrentMonth = selectedMonth === now.toISOString().slice(0, 7);
+    const isPastMonth = selectedMonth < now.toISOString().slice(0, 7);
+
+    const daysInMonth = periodEnd.getDate();
+    const daysRemaining = isCurrentMonth
+        ? Math.max(1, daysInMonth - now.getDate() + 1)
+        : isPastMonth ? 0 : daysInMonth;
 
     // Calculate total budget stats
     const stats = categories.reduce((acc, cat) => {
         const effectiveBudget = BudgetService.getEffectiveBudget(cat);
         const spent = BudgetService.calculateSpent(cat, transactions, periodStart, periodEnd);
-        const safeSpend = BudgetService.getDailySafeSpend(cat, spent);
+
+        let safeSpend = 0;
+        const remaining = effectiveBudget - spent;
+
+        if (daysRemaining > 0 && remaining > 0) {
+            safeSpend = remaining / daysRemaining;
+        }
 
         return {
             totalBudget: acc.totalBudget + effectiveBudget,
@@ -34,8 +53,6 @@ export const BudgetAnalysisCard: React.FC<BudgetAnalysisCardProps> = ({
 
     const remaining = stats.totalBudget - stats.totalSpent;
     const progress = Math.min((stats.totalSpent / stats.totalBudget) * 100, 100);
-    const daysInMonth = periodEnd.getDate();
-    const daysLeft = daysInMonth - now.getDate();
 
     // Determine status color
     let statusColor = 'bg-green-500';
@@ -90,9 +107,11 @@ export const BudgetAnalysisCard: React.FC<BudgetAnalysisCardProps> = ({
             {/* Stats Grid */}
             <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-900/50 p-3 rounded-xl">
-                    <p className="text-gray-400 text-xs mb-1">Safe Daily Spend</p>
+                    <p className="text-gray-400 text-xs mb-1">{isPastMonth ? 'Daily Average' : 'Safe Daily Spend'}</p>
                     <p className="text-white font-bold text-lg">
-                        {formatAmount(Math.round(stats.totalSafeSpend))}
+                        {isPastMonth
+                            ? formatAmount(Math.round(stats.totalSpent / daysInMonth))
+                            : formatAmount(Math.round(stats.totalSafeSpend))}
                     </p>
                 </div>
                 <div className="bg-gray-900/50 p-3 rounded-xl">
