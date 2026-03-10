@@ -106,11 +106,13 @@ export class BudgetService {
         const { end } = this.getBudgetPeriod(category.budgetConfig);
         const now = new Date();
 
-        // Calculate days remaining (including today)
-        const diffTime = Math.abs(end.getTime() - now.getTime());
-        const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        // Calculate days remaining (including today).
+        // NOTE: Do not use Math.abs here. If the period already ended,
+        // safe-to-spend must be 0 instead of a positive value.
+        const diffTime = end.getTime() - now.getTime();
+        if (diffTime <= 0) return 0;
 
-        if (daysRemaining <= 0) return 0;
+        const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         const effectiveBudget = this.getEffectiveBudget(category);
         const remaining = effectiveBudget - spent;
