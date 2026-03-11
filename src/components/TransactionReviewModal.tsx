@@ -32,12 +32,28 @@ export const TransactionReviewModal: React.FC<TransactionReviewModalProps> = ({
 
     // Auto-close when all transactions are approved
     useEffect(() => {
+        let closeTimer: ReturnType<typeof setTimeout> | undefined;
+
         if (isOpen && localPending.length === 0 && pendingTransactions.length === 0) {
-            setTimeout(() => {
+            closeTimer = setTimeout(() => {
                 onClose();
             }, 300); // Small delay for smooth UX
         }
+
+        return () => {
+            if (closeTimer) {
+                clearTimeout(closeTimer);
+            }
+        };
     }, [localPending.length, pendingTransactions.length, isOpen, onClose]);
+
+    // Clear transient editing state whenever modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            setEditingTx(null);
+            setSelectedCategory('');
+        }
+    }, [isOpen]);
 
     const handleApprove = (tx: Transaction) => {
         HapticService.success();
