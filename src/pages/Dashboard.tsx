@@ -26,6 +26,7 @@ interface DashboardProps {
   onUpdateCategory: (category: Category) => void;
   onAddCategory: (name: string, budget: number) => void;
   onUpdateTransaction?: (transaction: Transaction) => void;
+  onUpdateBulkTransactions?: (transactions: Transaction[]) => void;
   onDeleteTransaction?: (id: string) => void;
   onAddGoal: (goal: Goal) => void;
   onUpdateGoal: (goal: Goal) => void;
@@ -41,6 +42,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   onUpdateCategory,
   onAddCategory,
   onUpdateTransaction,
+  onUpdateBulkTransactions,
   onDeleteTransaction,
   onAddGoal,
   onUpdateGoal,
@@ -706,13 +708,16 @@ const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* Transaction Review Modal */}
-      <TransactionReviewModal
+       <TransactionReviewModal
         isOpen={showReviewModal}
         onClose={() => setShowReviewModal(false)}
         pendingTransactions={pendingTransactions}
         categories={categories}
         onApprove={(tx) => {
           if (onUpdateTransaction) onUpdateTransaction(tx);
+        }}
+        onApproveAll={(txs) => {
+          if (onUpdateBulkTransactions) onUpdateBulkTransactions(txs);
         }}
       />
     </div>

@@ -270,6 +270,19 @@ const App: React.FC = () => {
     });
   };
 
+  const updateBulkTransactions = (updatedTxs: Transaction[]) => {
+    setTransactions(prev => {
+      const updatedMap = new Map(updatedTxs.map(t => [t.id, t]));
+      const updated = prev.map(t => updatedMap.has(t.id) ? updatedMap.get(t.id)! : t);
+      SecureStorageService.set('transactions', updated).catch(e =>
+        console.error('Failed to save transactions:', e)
+      );
+      WidgetService.updateWidgets(); // Update widgets
+      return updated;
+    });
+  };
+
+
   const addTransaction = (tx: Transaction) => {
     setTransactions(prev => {
       const updated = [tx, ...prev];
@@ -448,6 +461,7 @@ const App: React.FC = () => {
                     onUpdateCategory={updateCategory}
                     onAddCategory={addCategory}
                     onUpdateTransaction={updateTransaction}
+                    onUpdateBulkTransactions={updateBulkTransactions}
                     onDeleteTransaction={deleteTransaction}
                     onAddGoal={addGoal}
                     onUpdateGoal={updateGoal}
