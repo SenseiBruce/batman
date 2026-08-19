@@ -5,6 +5,7 @@ import { Transaction } from '../types';
 import { CATEGORY_KEYWORDS } from '../constants';
 import { registerPlugin, Capacitor } from '@capacitor/core';
 import { GeminiCategorizationService } from './geminiCategorizationService';
+import { log } from '../utils/logger';
 
 // Register the SMS Reader plugin
 interface SMSReaderPlugin {
@@ -80,21 +81,21 @@ async function getLearnedCategory(merchant: string): Promise<string | null> {
 /** Request SMS permissions (READ_SMS, RECEIVE_SMS) at runtime. */
 export async function requestSmsPermissions(): Promise<boolean> {
     try {
-        console.log('🔐 Checking SMS permissions...');
+        log.info('smsService','🔐 Checking SMS permissions...');
         const status = await SMSReader.checkPermissions();
-        console.log('Permission status:', JSON.stringify(status));
+        log.info('smsService','Permission status:', JSON.stringify(status));
         if (status && (status.read === 'granted' || status === 'granted' || status.messages === 'granted')) {
-            console.log('✅ SMS permissions already granted');
+            log.info('smsService','✅ SMS permissions already granted');
             return true;
         }
-        console.log('📱 Requesting SMS permissions...');
+        log.info('smsService','📱 Requesting SMS permissions...');
         const result = await SMSReader.requestPermissions();
-        console.log('Permission result:', JSON.stringify(result));
+        log.info('smsService','Permission result:', JSON.stringify(result));
         const granted = result && (result.read === 'granted' || result === 'granted');
-        console.log(granted ? '✅ Permissions granted' : '❌ Permissions denied');
+        log.info('smsService',granted ? '✅ Permissions granted' : '❌ Permissions denied');
         return granted;
     } catch (e) {
-        console.error('SMS permission error:', e);
+        log.error('smsService','SMS permission error:', e);
         return false;
     }
 }
@@ -252,7 +253,7 @@ export async function parseSmsToTransaction(smsBody: string, smsDate: string, sm
                     availableCategories
                 });
                 if (aiCat && aiCat !== 'Other') category = aiCat;
-            } catch (e) { console.error('Gemini error', e); }
+            } catch (e) { log.error('smsService','Gemini error', e); }
         }
     }
 
@@ -289,12 +290,12 @@ export async function parseSmsToTransaction(smsBody: string, smsDate: string, sm
 /** Initialize SMS reading and return all parsed transactions. */
 export async function fetchAllSmsTransactions(): Promise<Transaction[]> {
     if (Capacitor.getPlatform() === 'ios') {
-        console.log('🍎 iOS detected: SMS reading is not supported. Skipping.');
+        log.info('smsService','🍎 iOS detected: SMS reading is not supported. Skipping.');
         return [];
     }
     const granted = await requestSmsPermissions();
     if (!granted) {
-        console.warn('SMS permissions not granted');
+        log.warn('smsService','SMS permissions not granted');
         throw new Error('SMS permissions not granted');
     }
     try {
@@ -310,15 +311,15 @@ export async function fetchAllSmsTransactions(): Promise<Transaction[]> {
             const safetyBuffer = 24 * 60 * 60 * 1000;
             const fetchFrom = lastSyncTime - safetyBuffer;
 
-            console.log(`🕒 Incremental Sync: Fetching SMS after ${new Date(fetchFrom).toLocaleString()}`);
+            log.info('smsService',`🕒 Incremental Sync: Fetching SMS after ${new Date(fetchFrom).toLocaleString()}`);
             filter.minDate = fetchFrom;
         } else {
-            console.log('🕒 First Sync: Fetching all SMS messages...');
+            log.info('smsService','🕒 First Sync: Fetching all SMS messages...');
         }
 
         const result = await SMSReader.getMessages(filter);
         const messages: Array<{ body: string; date: number; address: string }> = result?.messages || [];
-        console.log(`📱 Found ${messages.length} new SMS messages`);
+        log.info('smsService',`📱 Found ${messages.length} new SMS messages`);
 
         const transactions: Transaction[] = [];
         const unknownTransactions: { index: number; tx: Transaction }[] = [];
@@ -346,7 +347,7 @@ export async function fetchAllSmsTransactions(): Promise<Transaction[]> {
 
         // 2. Batch AI Categorization (if enabled and needed)
         if (unknownTransactions.length > 0 && geminiService) {
-            console.log(`🤖 AI Categorizing ${unknownTransactions.length} unknown transactions...`);
+            log.info('smsService',`🤖 AI Categorizing ${unknownTransactions.length} unknown transactions...`);
 
             // Prepare batch items
             const batchItems = unknownTransactions.map(item => ({
@@ -370,10 +371,10 @@ export async function fetchAllSmsTransactions(): Promise<Transaction[]> {
                     // await recordCategoryCorrection(item.tx.merchant, newCategory);
                 }
             }
-            console.log(`✅ AI Categorization complete.`);
+            log.info('smsService',`✅ AI Categorization complete.`);
         }
 
-        console.log(`📊 Parsed ${transactions.length} valid transactions`);
+        log.info('smsService',`📊 Parsed ${transactions.length} valid transactions`);
 
         // Update last sync time
         if (maxDate > lastSyncTime) {
@@ -382,7 +383,7 @@ export async function fetchAllSmsTransactions(): Promise<Transaction[]> {
 
         return transactions;
     } catch (e) {
-        console.error('Error reading SMS', e);
+        log.error('smsService','Error reading SMS', e);
         throw e;
     }
 }

@@ -34,6 +34,7 @@ import { InteractiveBackground } from './components/InteractiveBackground';
 import { JarvisProvider } from './contexts/JarvisContext';
 import { JarvisNotificationBubble } from './components/JarvisNotificationBubble';
 import { Toaster } from 'react-hot-toast';
+import { log } from './utils/logger';
 
 // ... (existing imports)
 
@@ -57,13 +58,13 @@ const App: React.FC = () => {
 
     const timeoutId = setTimeout(async () => {
       try {
-        console.log('🔄 Auto-Backup triggered...');
+        log.info('App','🔄 Auto-Backup triggered...');
         setIsSyncing(true);
         // Sync everything on change (Debounced)
         await SyncService.backupToCloud();
-        console.log('✅ Auto-Backup complete');
+        log.info('App','✅ Auto-Backup complete');
       } catch (error) {
-        console.error('❌ Auto-Backup failed:', error);
+        log.error('App','❌ Auto-Backup failed:', error);
       } finally {
         setIsSyncing(false);
       }
@@ -91,7 +92,7 @@ const App: React.FC = () => {
         // Accounts Migration
         const accounts = await AccountService.getAccounts();
         if (accounts.length === 0) {
-          console.log('📦 Migrating: Creating default Cash account...');
+          log.info('App','📦 Migrating: Creating default Cash account...');
           const defaultAcc = await AccountService.createAccount('Cash', 'cash', 0);
 
           // Assign existing transactions to default account
@@ -142,7 +143,7 @@ const App: React.FC = () => {
           setCategories(DEFAULT_CATEGORIES);
         }
       } catch (error) {
-        console.error('Failed to load data:', error);
+        log.error('App','Failed to load data:', error);
         setCategories(DEFAULT_CATEGORIES);
       } finally {
         setIsDataLoaded(true);
@@ -157,7 +158,7 @@ const App: React.FC = () => {
       if (Capacitor.getPlatform() === 'ios') return;
 
       try {
-        console.log('🔄 Auto-syncing SMS on app startup...');
+        log.info('App','🔄 Auto-syncing SMS on app startup...');
         const newTxs = await fetchAllSmsTransactions();
         if (newTxs.length > 0) {
           // Use addBulkTransactions to prevent duplicates
@@ -169,17 +170,17 @@ const App: React.FC = () => {
 
             const updated = [...uniqueNewTxs, ...prev];
             SecureStorageService.set('transactions', updated).catch(e =>
-              console.error('Failed to save transactions:', e)
+              log.error('App','Failed to save transactions:', e)
             );
             WidgetService.updateWidgets(); // Update widgets
-            console.log(`✅ Auto-sync: Added ${uniqueNewTxs.length} new transactions`);
+            log.info('App',`✅ Auto-sync: Added ${uniqueNewTxs.length} new transactions`);
             return updated;
           });
         } else {
-          console.log('ℹ️ Auto-sync: No new SMS transactions found');
+          log.info('App','ℹ️ Auto-sync: No new SMS transactions found');
         }
       } catch (error) {
-        console.error('❌ Auto-sync failed:', error);
+        log.error('App','❌ Auto-sync failed:', error);
         // Silently fail - don't interrupt app startup
       }
     };
@@ -225,7 +226,7 @@ const App: React.FC = () => {
       const currentMonth = new Date().toISOString().slice(0, 7);
 
       if (lastRolloverMonth !== currentMonth) {
-        console.log('📅 New month detected, checking for rollovers...');
+        log.info('App','📅 New month detected, checking for rollovers...');
 
         // Calculate previous month date range
         const now = new Date();
@@ -249,7 +250,7 @@ const App: React.FC = () => {
         if (hasUpdates) {
           setCategories(updatedCategories);
           await SecureStorageService.set('categories', updatedCategories);
-          console.log('✅ Rollover amounts updated');
+          log.info('App','✅ Rollover amounts updated');
         }
 
         await SecureStorageService.set('last_rollover_month', currentMonth);
@@ -263,7 +264,7 @@ const App: React.FC = () => {
     setTransactions(prev => {
       const updated = prev.map(t => t.id === updatedTx.id ? updatedTx : t);
       SecureStorageService.set('transactions', updated).catch(e =>
-        console.error('Failed to save transactions:', e)
+        log.error('App','Failed to save transactions:', e)
       );
       WidgetService.updateWidgets(); // Update widgets
       return updated;
@@ -275,7 +276,7 @@ const App: React.FC = () => {
       const updatedMap = new Map(updatedTxs.map(t => [t.id, t]));
       const updated = prev.map(t => updatedMap.has(t.id) ? updatedMap.get(t.id)! : t);
       SecureStorageService.set('transactions', updated).catch(e =>
-        console.error('Failed to save transactions:', e)
+        log.error('App','Failed to save transactions:', e)
       );
       WidgetService.updateWidgets(); // Update widgets
       return updated;
@@ -287,7 +288,7 @@ const App: React.FC = () => {
     setTransactions(prev => {
       const updated = [tx, ...prev];
       SecureStorageService.set('transactions', updated).catch(e =>
-        console.error('Failed to save transactions:', e)
+        log.error('App','Failed to save transactions:', e)
       );
       WidgetService.updateWidgets(); // Update widgets
       return updated;
@@ -302,7 +303,7 @@ const App: React.FC = () => {
 
       const updated = [...newUniqueTxs, ...prev];
       SecureStorageService.set('transactions', updated).catch(e =>
-        console.error('Failed to save transactions:', e)
+        log.error('App','Failed to save transactions:', e)
       );
       WidgetService.updateWidgets(); // Update widgets
       return updated;
@@ -313,7 +314,7 @@ const App: React.FC = () => {
     setTransactions(prev => {
       const updated = prev.filter(t => t.id !== id);
       SecureStorageService.set('transactions', updated).catch(e =>
-        console.error('Failed to save transactions:', e)
+        log.error('App','Failed to save transactions:', e)
       );
       WidgetService.updateWidgets(); // Update widgets
       return updated;
@@ -324,7 +325,7 @@ const App: React.FC = () => {
     setCategories(prev => {
       const updated = prev.map(c => c.id === updatedCategory.id ? updatedCategory : c);
       SecureStorageService.set('categories', updated).catch(e =>
-        console.error('Failed to save categories:', e)
+        log.error('App','Failed to save categories:', e)
       );
       WidgetService.updateWidgets(); // Update widgets
       return updated;
@@ -334,7 +335,7 @@ const App: React.FC = () => {
   const clearTransactions = () => {
     setTransactions([]);
     SecureStorageService.remove('transactions').catch(e =>
-      console.error('Failed to remove transactions:', e)
+      log.error('App','Failed to remove transactions:', e)
     );
   };
 
@@ -349,7 +350,7 @@ const App: React.FC = () => {
     setCategories(prev => {
       const updated = [...prev, newCategory];
       SecureStorageService.set('categories', updated).catch(e =>
-        console.error('Failed to save categories:', e)
+        log.error('App','Failed to save categories:', e)
       );
       return updated;
     });
@@ -359,7 +360,7 @@ const App: React.FC = () => {
     setGoals(prev => {
       const updated = [...prev, goal];
       SecureStorageService.set('goals', updated).catch(e =>
-        console.error('Failed to save goals:', e)
+        log.error('App','Failed to save goals:', e)
       );
       return updated;
     });
@@ -369,7 +370,7 @@ const App: React.FC = () => {
     setGoals(prev => {
       const updated = prev.map(g => g.id === updatedGoal.id ? updatedGoal : g);
       SecureStorageService.set('goals', updated).catch(e =>
-        console.error('Failed to save goals:', e)
+        log.error('App','Failed to save goals:', e)
       );
       return updated;
     });
@@ -379,7 +380,7 @@ const App: React.FC = () => {
     setGoals(prev => {
       const updated = prev.filter(g => g.id !== id);
       SecureStorageService.set('goals', updated).catch(e =>
-        console.error('Failed to save goals:', e)
+        log.error('App','Failed to save goals:', e)
       );
       return updated;
     });
@@ -388,7 +389,7 @@ const App: React.FC = () => {
   const addWishlistItem = (item: WishlistItem) => {
     setWishlist(prev => {
       const updated = [item, ...prev];
-      SecureStorageService.set('wishlist', updated).catch(e => console.error('Failed to save wishlist:', e));
+      SecureStorageService.set('wishlist', updated).catch(e => log.error('App','Failed to save wishlist:', e));
       return updated;
     });
   };
@@ -396,7 +397,7 @@ const App: React.FC = () => {
   const updateWishlistItem = (item: WishlistItem) => {
     setWishlist(prev => {
       const updated = prev.map(i => i.id === item.id ? item : i);
-      SecureStorageService.set('wishlist', updated).catch(e => console.error('Failed to save wishlist:', e));
+      SecureStorageService.set('wishlist', updated).catch(e => log.error('App','Failed to save wishlist:', e));
       return updated;
     });
   };
@@ -404,7 +405,7 @@ const App: React.FC = () => {
   const deleteWishlistItem = (id: string) => {
     setWishlist(prev => {
       const updated = prev.filter(i => i.id !== id);
-      SecureStorageService.set('wishlist', updated).catch(e => console.error('Failed to save wishlist:', e));
+      SecureStorageService.set('wishlist', updated).catch(e => log.error('App','Failed to save wishlist:', e));
       return updated;
     });
   };
