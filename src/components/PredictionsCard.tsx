@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Transaction, Category } from '../types';
-import { PredictionService, PredictiveInsight, BudgetForecast, SpendingAnomaly } from '../services/predictionService';
+import { PredictionService } from '../services/predictionService';
 import { useCurrency } from '../contexts/CurrencyContext';
 
 interface PredictionsCardProps {

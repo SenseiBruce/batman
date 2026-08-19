@@ -46,7 +46,7 @@ export class SecureStorageService {
                 if (result !== null) {
                     value = result as string;
                 }
-            } catch (error) {
+            } catch {
                 // Key not found or other error, proceed to check insecure storage
             }
         }
@@ -93,7 +93,7 @@ export class SecureStorageService {
             if (Capacitor.isNativePlatform()) {
                 await SecureStorage.remove(key);
             }
-        } catch (e) {
+        } catch {
             // Ignore if not found
         }
         // Always try to remove from preferences too (cleanup)

@@ -70,7 +70,7 @@ export const CloudAuthService = {
                 };
             }
             return await SecureStorageService.get<User>('cloud_user');
-        } catch (error) {
+        } catch {
             // Fallback to local storage if plugin fails (e.g., offline)
             return await SecureStorageService.get<User>('cloud_user');
         }

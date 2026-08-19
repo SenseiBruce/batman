@@ -63,7 +63,7 @@ export class BudgetService {
         const end = new Date(now);
 
         switch (period) {
-            case 'weekly':
+            case 'weekly': {
                 // Start of week (Monday)
                 const day = now.getDay();
                 const diff = now.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
@@ -74,6 +74,7 @@ export class BudgetService {
                 end.setDate(start.getDate() + 6);
                 end.setHours(23, 59, 59, 999);
                 break;
+            }
 
             case 'yearly':
                 start.setMonth(0, 1);

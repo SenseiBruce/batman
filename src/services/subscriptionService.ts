@@ -33,7 +33,7 @@ export const detectSubscriptions = (
     const subs: Subscription[] = [];
     let subId = 0;
 
-    Object.entries(groups).forEach(([merchantKey, txs]) => {
+    Object.entries(groups).forEach(([_merchantKey, txs]) => {
         if (txs.length < 3) return; // need at least 3 payments to consider recurring
         // Sort by date descending
         const sorted = txs.slice().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

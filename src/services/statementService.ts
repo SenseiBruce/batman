@@ -55,7 +55,7 @@ export const parseStatement = async (file: File): Promise<Transaction[]> => {
                 const narrationIdx = headerRow.findIndex((c: string) => c.includes('Narration'));
                 const debitIdx = headerRow.findIndex((c: string) => c.includes('Withdrawal') || c.includes('Debit'));
                 const creditIdx = headerRow.findIndex((c: string) => c.includes('Deposit') || c.includes('Credit'));
-                const refIdx = headerRow.findIndex((c: string) => c.includes('Chq./Ref.No.'));
+                const _refIdx = headerRow.findIndex((c: string) => c.includes('Chq./Ref.No.'));
 
                 // Parse rows
                 for (let i = headerRowIndex + 1; i < jsonData.length; i++) {

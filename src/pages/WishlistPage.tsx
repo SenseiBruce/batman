@@ -13,7 +13,7 @@ interface WishlistPageProps {
     onBuy: (item: WishlistItem) => void; // Converts to transaction
 }
 
-const WishlistPage: React.FC<WishlistPageProps> = ({ wishlist, onAdd, onUpdate, onDelete, onBuy }) => {
+const WishlistPage: React.FC<WishlistPageProps> = ({ wishlist, onAdd, onUpdate, onDelete: _onDelete, onBuy }) => {
     const navigate = useNavigate();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 

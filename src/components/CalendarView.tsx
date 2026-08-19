@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Transaction } from '../types';
 import { HapticService } from '../services/hapticService';
 

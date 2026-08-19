@@ -24,7 +24,7 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ onAdd, categories }) =>
   const [amount, setAmount] = useState(state?.initialAmount?.toString() || '');
   const [merchant, setMerchant] = useState(state?.initialMerchant || '');
   const [category, setCategory] = useState(state?.initialCategory || DEFAULT_CATEGORIES[0].name);
-  const [type, setType] = useState<'debit' | 'credit'>('debit');
+  const [type] = useState<'debit' | 'credit'>('debit');
 
   const handleSmsParse = () => {
     if (!smsText.trim()) return;

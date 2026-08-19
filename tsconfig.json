@@ -12,7 +12,8 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "types": [
-      "node"
+      "node",
+      "vite/client"
     ],
     "moduleResolution": "bundler",
     "isolatedModules": true,
@@ -28,8 +29,16 @@
     "noEmit": true
   },
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "src/**/*"
+    "src/**/*",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "capacitor.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "android",
+    "ios",
+    "coverage"
   ]
 }

@@ -61,7 +61,7 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
             // Save it as default so we don't guess every time
             await SecureStorageService.set('currency_preference', detected);
-        } catch (e) {
+        } catch {
             console.warn('Currency detection failed, defaulting to INR');
             setCurrencyCode('INR');
         }
@@ -82,7 +82,7 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0,
             }).format(amount);
-        } catch (e) {
+        } catch {
             // Fallback
             return `${symbol}${amount.toLocaleString()}`;
         }

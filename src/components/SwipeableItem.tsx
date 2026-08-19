@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { motion, PanInfo, useAnimation } from 'framer-motion';
 import { HapticService } from '../services/hapticService';
 
@@ -16,7 +16,7 @@ export const SwipeableItem: React.FC<SwipeableItemProps> = ({
     threshold = 100,
 }) => {
     const controls = useAnimation();
-    const [isDragging, setIsDragging] = useState(false);
+    const [, setIsDragging] = useState(false);
     const [hasTriggeredHaptic, setHasTriggeredHaptic] = useState(false);
 
     const handleDrag = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {

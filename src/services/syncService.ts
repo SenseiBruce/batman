@@ -1,5 +1,5 @@
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
-import { collection, doc, getDoc, getDocs, setDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import { SecureStorageService } from './secureStorageService';
 import { CloudAuthService } from './cloudAuthService';

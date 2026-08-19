@@ -72,7 +72,6 @@ export class PredictionService {
         const currentDay = now.getDate();
         const daysInMonth = new Date(year, month, 0).getDate();
         const daysElapsed = currentDay;
-        const daysRemaining = daysInMonth - currentDay;
 
         categories.forEach(category => {
             const categoryTransactions = transactions.filter(t =>
@@ -160,8 +159,6 @@ export class PredictionService {
         const forecasts: BudgetForecast[] = [];
         const predictions = this.predictMonthlySpending(transactions, categories, selectedMonth);
         const now = new Date();
-        const [year, month] = selectedMonth.split('-').map(Number);
-        const daysInMonth = new Date(year, month, 0).getDate();
         const currentDay = now.getDate();
 
         categories.forEach(category => {
@@ -223,7 +220,7 @@ export class PredictionService {
         });
 
         // Detect anomalies in each category
-        categoryGroups.forEach((txs, category) => {
+        categoryGroups.forEach((txs) => {
             if (txs.length < 3) return; // Need at least 3 transactions for statistical analysis
 
             const amounts = txs.map(t => t.amount);

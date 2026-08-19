@@ -2,7 +2,7 @@
 import { Preferences } from '@capacitor/preferences';
 import { SecureStorageService } from './secureStorageService';
 import { Transaction } from '../types';
-import { DEFAULT_CATEGORIES, CATEGORY_KEYWORDS } from '../constants';
+import { CATEGORY_KEYWORDS } from '../constants';
 import { registerPlugin, Capacitor } from '@capacitor/core';
 import { GeminiCategorizationService } from './geminiCategorizationService';
 
@@ -16,7 +16,7 @@ interface SMSReaderPlugin {
 const SMSReader = registerPlugin<SMSReaderPlugin>('MessageReader');
 
 /** Helper: Detect personal name patterns for Personal Transfers */
-function hasPersonNamePattern(merchant: string): boolean {
+export function hasPersonNamePattern(merchant: string): boolean {
     const patterns = [
         /^[A-Z][a-z]+\s+[A-Z][a-z]+$/,
         /kumar|singh|sharma|prasad|pal|verma|gupta|jain|reddy|nair|iyer|agarwal/i,
@@ -27,7 +27,7 @@ function hasPersonNamePattern(merchant: string): boolean {
 }
 
 /** Smart categorization based on amount, merchant and heuristics */
-function smartCategorize(merchant: string, amount: number, smsBody: string, fallback: string): string {
+export function smartCategorize(merchant: string, amount: number, smsBody: string, fallback: string): string {
     // Large amounts likely investments or big purchases
     if (amount > 50000) {
         if (/sip|mutual|stock|equity|investment/i.test(smsBody)) return 'Investments';
@@ -55,7 +55,7 @@ async function initGeminiService() {
 initGeminiService();
 
 /** Record a user correction for future learning */
-async function recordCategoryCorrection(merchant: string, userCategory: string) {
+export async function recordCategoryCorrection(merchant: string, userCategory: string) {
     const key = 'category_corrections';
     const { value } = await Preferences.get({ key });
     let corrections: Array<{ merchant: string; category: string; timestamp: string }> = [];
@@ -107,7 +107,7 @@ export async function checkSmsPermissionsOnly(): Promise<boolean> {
 }
 
 /** Parse a raw SMS text into a Transaction object */
-async function parseSmsToTransaction(smsBody: string, smsDate: string, smsFrom: string): Promise<Transaction | null> {
+export async function parseSmsToTransaction(smsBody: string, smsDate: string, smsFrom: string): Promise<Transaction | null> {
     // ==================== FILTERING ====================
     const spamKeywords = [
         'click', 'offer', 'deal', 'sale', 'discount', 'save', 'cashback',

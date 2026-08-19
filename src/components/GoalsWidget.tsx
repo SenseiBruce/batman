@@ -11,7 +11,7 @@ interface GoalsWidgetProps {
     onDeleteGoal: (id: string) => void;
 }
 
-export const GoalsWidget: React.FC<GoalsWidgetProps> = ({ goals, onAddGoal, onUpdateGoal, onDeleteGoal }) => {
+export const GoalsWidget: React.FC<GoalsWidgetProps> = ({ goals, onAddGoal, onUpdateGoal, onDeleteGoal: _onDeleteGoal }) => {
     const { currencySymbol, formatAmount } = useCurrency();
     const [isAdding, setIsAdding] = useState(false);
     const [newGoalName, setNewGoalName] = useState('');

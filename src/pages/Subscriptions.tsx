@@ -34,7 +34,6 @@ const Subscriptions: React.FC<SubscriptionsProps> = ({ transactions }) => {
             }
         };
         load();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [transactions]);
 
     const startEdit = (sub: Subscription) => {

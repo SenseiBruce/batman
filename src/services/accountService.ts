@@ -1,4 +1,4 @@
-import { Account, Transaction, AccountType } from '../types';
+import { Account, AccountType } from '../types';
 import { SecureStorageService } from './secureStorageService';
 
 const ACCOUNTS_KEY = 'accounts';

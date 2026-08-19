@@ -19,7 +19,7 @@ import AccountsPage from './pages/AccountsPage';
 import Onboarding from './pages/Onboarding';
 import CustomReports from './pages/CustomReports';
 import { Transaction, Category, Goal, WishlistItem } from './types';
-import { DEFAULT_CATEGORIES, CATEGORY_KEYWORDS } from './constants';
+import { DEFAULT_CATEGORIES } from './constants';
 import { fetchAllSmsTransactions } from './services/smsService';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
@@ -47,7 +47,7 @@ const App: React.FC = () => {
   const [isCreateSplitModalOpen, setIsCreateSplitModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [, setIsSyncing] = useState(false);
 
   // ... (existing effects)
 
@@ -125,7 +125,7 @@ const App: React.FC = () => {
           let loadedCats = catData;
 
           // Migration: Remove 'spent' field from old data (we now calculate dynamically)
-          loadedCats = loadedCats.map(({ spent, ...cat }) => cat);
+          loadedCats = loadedCats.map(({ spent: _spent, ...cat }) => cat);
 
           // Migration: Ensure 'Investments' exists
           if (!loadedCats.some(c => c.name === 'Investments')) {

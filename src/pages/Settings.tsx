@@ -109,7 +109,7 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
         setCurrentUser(user);
         alert(`Welcome back, ${user.displayName}!`);
       }
-    } catch (error) {
+    } catch {
       alert('Sign in failed. Check console.');
     }
   };
@@ -127,7 +127,7 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
     try {
       await SyncService.backupToCloud();
       toast.success('Backup successful!', { id: toastId });
-    } catch (error) {
+    } catch {
       toast.error('Backup failed', { id: toastId });
     } finally {
       setIsSyncing(false);
@@ -194,7 +194,7 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
       } else {
         setError('Current PIN is incorrect');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to change PIN');
     }
   };

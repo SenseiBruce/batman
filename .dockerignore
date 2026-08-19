@@ -1,0 +1,16 @@
+# Vite / local secrets
+.env
+.env.local
+*.local
+
+# Test / build output
+coverage
+node_modules
+dist
+android
+ios
+.git
+.gemini
+.agent
+*.md
+!README.md
