@@ -3,6 +3,7 @@ import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import { SecureStorageService } from './secureStorageService';
 import { CloudAuthService } from './cloudAuthService';
+import { log } from '../utils/logger';
 
 const CHUNK_SIZE = 200; // Number of transactions per chunk
 
@@ -11,7 +12,7 @@ async function authenticatedFirestoreOperation<T>(operation: () => Promise<T>): 
     try {
         // Ensure Web SDK is authenticated
         if (!auth.currentUser) {
-            console.warn('Web SDK is not authenticated. Firestore operations may fail. Ensure "CloudAuthService.signInWithGoogle" was called successfully.');
+            log.warn('syncService','Web SDK is not authenticated. Firestore operations may fail. Ensure "CloudAuthService.signInWithGoogle" was called successfully.');
         }
 
         // We still call getIdToken purely to ensure the native session is alive/refreshing, 
@@ -20,7 +21,7 @@ async function authenticatedFirestoreOperation<T>(operation: () => Promise<T>): 
 
         return await operation();
     } catch (error) {
-        console.error('Firestore operation failed:', error);
+        log.error('syncService','Firestore operation failed:', error);
         throw error;
     }
 }
@@ -79,7 +80,7 @@ export const SyncService = {
                 return true;
             });
         } catch (error) {
-            console.error("Backup failed:", error);
+            log.error('syncService',"Backup failed:", error);
             throw error;
         }
     },
@@ -95,7 +96,7 @@ export const SyncService = {
                 // Check if backup exists
                 const userDoc = await getDoc(doc(db, "users", uid));
                 if (!userDoc.exists()) {
-                    console.log("No backup found!");
+                    log.info('syncService',"No backup found!");
                     return false;
                 }
 
@@ -130,7 +131,7 @@ export const SyncService = {
                 return true;
             });
         } catch (error) {
-            console.error("Restore failed:", error);
+            log.error('syncService',"Restore failed:", error);
             throw error;
         }
     }
