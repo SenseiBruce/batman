@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@aparajita/capacitor-biometric-auth": "^6.0.0",
-    "@aparajita/capacitor-secure-storage": "^6.0.1",
+    "@aparajita/capacitor-secure-storage": "^8.0.0",
     "@capacitor-firebase/authentication": "^6.0.0",
     "@capacitor/android": "^6.0.0",
     "@capacitor/app": "^6.0.3",
