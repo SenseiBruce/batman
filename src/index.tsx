@@ -11,6 +11,7 @@ if (!rootElement) {
 import { HashRouter } from 'react-router-dom';
 
 const root = ReactDOM.createRoot(rootElement);
+void import('./utils/sentry').then(({ initErrorTracking }) => initErrorTracking());
 root.render(
   <React.StrictMode>
     <HashRouter>

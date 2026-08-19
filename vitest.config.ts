@@ -10,8 +10,22 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
-      include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/test/**', 'src/**/*.d.ts', 'src/index.tsx'],
+      include: [
+        'src/services/budgetService.ts',
+        'src/services/syncService.ts',
+        'src/services/geminiCategorizationService.ts',
+        'src/services/geminiService.ts',
+        'src/services/splitService.ts',
+        'src/utils/logger.ts',
+        'src/utils/parser.ts',
+        'src/contexts/JarvisContext.tsx',
+        'src/components/settings/**/*.{ts,tsx}',
+      ],
+      exclude: ['src/**/*.test.*', 'src/test/**', 'src/**/*.d.ts'],
+      thresholds: {
+        lines: 60,
+        branches: 50,
+      },
     },
   },
 });

@@ -33,6 +33,7 @@
     "@capacitor/splash-screen": "^6.0.0",
     "@google/genai": "^1.30.0",
     "@google/generative-ai": "^0.24.1",
+    "@sentry/browser": "^10.70.0",
     "@solimanware/capacitor-sms-reader": "^5.0.3",
     "firebase": "^10.14.1",
     "framer-motion": "^12.23.24",

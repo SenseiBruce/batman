@@ -1,0 +1,11 @@
+{
+  "name": "Jarvis Expense Tracker",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "forwardPorts": [5173, 8080],
+  "postCreateCommand": "cp -n .env.example .env.local || true && npm ci",
+  "customizations": {
+    "vscode": {
+      "extensions": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode"]
+    }
+  }
+}

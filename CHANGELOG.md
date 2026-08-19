@@ -1,0 +1,20 @@
+# Changelog
+
+All notable changes to Jarvis Expense Tracker are documented here.
+
+## 1.1.0 - 2026-08-19
+
+### Added
+- Vitest coverage for budget, sync, SMS, Gemini, split, and insight services
+- Component tests for Settings API key, PIN, and backup panels
+- Page tests for Transactions sync/export toasts and Jarvis chat context
+- Structured logger (`src/utils/logger.ts`) and optional Sentry via `VITE_SENTRY_DSN`
+- GitHub Actions dependency audit, Dependabot, Docker Compose, and a Dev Container
+
+### Changed
+- Firebase web config reads from `VITE_FIREBASE_*` environment variables
+- Settings and Insights pages split into smaller presentational components
+
+## 1.0.0 - 2026-01-01
+
+- Initial Jarvis expense tracker (SMS parse, budgets, Capacitor Android app)
