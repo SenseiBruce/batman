@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis, BarChart, Bar } from 'recharts';
 import { Transaction, Category } from '../types';
 import { Link } from 'react-router-dom';
 import TopMerchants from '../components/TopMerchants';
 import CategoryTrends from '../components/CategoryTrends';
 import { AnimatedNumber } from '../components/AnimatedNumber';
 import { HapticService } from '../services/hapticService';
+import { MonthComparison } from '../components/insights/MonthComparison';
+import { SpendingCharts } from '../components/insights/SpendingCharts';
 
 interface InsightsProps {
   transactions: Transaction[];
@@ -123,23 +124,8 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 4);
 
-  // Handle chart interactions
-  const handlePieClick = (data: any) => {
-    HapticService.medium(); // Haptic for chart interaction
-    if (selectedCategory === data.name) {
-      setSelectedCategory(null); // Deselect if clicking same category
-    } else {
-      setSelectedCategory(data.name);
-    }
-  };
-
-  const handleBarClick = (data: any) => {
-    HapticService.medium(); // Haptic for chart interaction
-    if (selectedCategory === data.name) {
-      setSelectedCategory(null);
-    } else {
-      setSelectedCategory(data.name);
-    }
+  const toggleCategory = (name: string) => {
+    setSelectedCategory((prev) => (prev === name ? null : name));
   };
 
   const clearFilter = () => {
@@ -351,153 +337,16 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
       {/* Top Merchants Widget */}
       <TopMerchants transactions={monthlyTransactions} selectedMonth={selectedMonth} />
 
-      {/* Month-over-Month Comparison */}
-      {!selectedCategory && (
-        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 mb-6">
-          <h3 className="text-white font-semibold mb-4">Month Comparison</h3>
-          <div className="h-48 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthComparisonData}>
-                <XAxis dataKey="month" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis hide />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }}
-                  labelStyle={{ color: '#9ca3af' }}
-                />
-                <Bar dataKey="expenses" fill="#ef4444" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
+      {!selectedCategory && <MonthComparison data={monthComparisonData} />}
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 gap-6 mb-6">
-        {/* Spending by Category */}
-        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-white font-semibold">Spending by Category</h3>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  HapticService.light(); // Light haptic for toggle
-                  setChartType('pie');
-                }}
-                className={`p-1.5 rounded ${chartType === 'pie' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'} transition-colors`}
-                title="Pie Chart"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
-              </button>
-              <button
-                onClick={() => {
-                  HapticService.light(); // Light haptic for toggle
-                  setChartType('bar');
-                }}
-                className={`p-1.5 rounded ${chartType === 'bar' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'} transition-colors`}
-                title="Bar Chart"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
-              </button>
-            </div>
-          </div>
-          <p className="text-xs text-gray-400 mb-3">💡 Tap a slice/bar to filter transactions</p>
-          <div className="h-48 w-full cursor-pointer">
-            {categoryData.length > 0 ? (
-              chartType === 'pie' ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={categoryData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={70}
-                      paddingAngle={5}
-                      dataKey="value"
-                      onClick={handlePieClick}
-                    >
-                      {categoryData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={entry.color}
-                          stroke={selectedCategory === entry.name ? '#fff' : 'none'}
-                          strokeWidth={selectedCategory === entry.name ? 3 : 0}
-                          opacity={selectedCategory && selectedCategory !== entry.name ? 0.3 : 1}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }}
-                      itemStyle={{ color: '#fff' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={categoryData}>
-                    <XAxis dataKey="name" stroke="#6b7280" fontSize={10} tickLine={false} axisLine={false} />
-                    <YAxis hide />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }}
-                      labelStyle={{ color: '#9ca3af' }}
-                    />
-                    <Bar
-                      dataKey="value"
-                      radius={[8, 8, 0, 0]}
-                      onClick={handleBarClick}
-                    >
-                      {categoryData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={entry.color}
-                          opacity={selectedCategory && selectedCategory !== entry.name ? 0.3 : 1}
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              )
-            ) : (
-              <div className="h-full flex items-center justify-center text-gray-500">No data yet</div>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2 mt-2 justify-center">
-            {categoryData.slice(0, 4).map((cat) => (
-              <button
-                key={cat.name}
-                onClick={() => handlePieClick(cat)}
-                className={`flex items-center text-xs transition-all ${selectedCategory === cat.name
-                  ? 'text-white font-bold'
-                  : selectedCategory
-                    ? 'text-gray-500'
-                    : 'text-gray-300'
-                  }`}
-              >
-                <div className="w-2 h-2 rounded-full mr-1" style={{ backgroundColor: cat.color }}></div>
-                {cat.name}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Weekly Trend */}
-        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
-          <h3 className="text-white font-semibold mb-4">Weekly Trend</h3>
-          <div className="h-40 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trendData}>
-                <XAxis dataKey="day" stroke="#6b7280" fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis hide />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }}
-                  labelStyle={{ color: '#9ca3af' }}
-                />
-                <Line type="monotone" dataKey="amount" stroke="#60A5FA" strokeWidth={3} dot={{ r: 3, fill: '#60A5FA' }} activeDot={{ r: 5 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
+      <SpendingCharts
+        categoryData={categoryData}
+        trendData={trendData}
+        chartType={chartType}
+        selectedCategory={selectedCategory}
+        onChartTypeChange={setChartType}
+        onCategorySelect={toggleCategory}
+      />
 
       {/* Category Trends Chart */}
       <CategoryTrends transactions={transactions} categories={categories} />
