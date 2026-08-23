@@ -14,10 +14,21 @@ dist-ssr
 
 # Env files (keep .env.example committed)
 .env
-.env.local
+.env.*
+!.env.example
 
 # Test / build output
 coverage
+*.tsbuildinfo
+
+# Native / release artifacts
+*.apk
+*.aab
+*.ipa
+android/app/build/
+android/.gradle/
+ios/App/Pods/
+ios/DerivedData/
 
 # Editor directories and files
 .vscode/*
@@ -29,3 +40,8 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+
+# OS / temp
+Thumbs.db
+*.tmp
+*.temp

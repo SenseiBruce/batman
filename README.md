@@ -2,6 +2,8 @@
 
 SMS-powered expense tracker for India. Jarvis reads bank/UPI SMS on Android (Capacitor), categorizes merchants, tracks budgets, and answers spending questions through an optional Gemini assistant. The same codebase ships as a Vite web app.
 
+License: [MIT](LICENSE). See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md).
+
 ## Architecture
 
 ```
@@ -23,7 +25,7 @@ Business rules live in `src/services` so they can be unit-tested without the UI.
 
 ```bash
 git clone <repo-url>
-cd batman-1
+cd batman
 npm ci
 cp .env.example .env.local
 ```
