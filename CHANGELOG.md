@@ -15,6 +15,8 @@ All notable changes to Jarvis Expense Tracker are documented here.
 
 - Transaction CSV export now respects the current search, month, and filter selection
 
+- SMS and statement imports skip merchant+amount+day duplicates, even when IDs differ
+
 ## 1.1.0 - 2026-08-19
 
 ### Added

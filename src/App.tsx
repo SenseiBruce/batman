@@ -21,6 +21,7 @@ import CustomReports from './pages/CustomReports';
 import { Transaction, Category, Goal, WishlistItem } from './types';
 import { DEFAULT_CATEGORIES } from './constants';
 import { fetchAllSmsTransactions } from './services/smsService';
+import { dedupeTransactions } from './utils/transactionDedup';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { PageTransition } from './components/PageTransition';
@@ -296,18 +297,19 @@ const App: React.FC = () => {
   };
 
   const addBulkTransactions = (txs: Transaction[]) => {
-    setTransactions(prev => {
-      // Filter out duplicates based on id
-      const existingIds = new Set(prev.map(t => t.id));
-      const newUniqueTxs = txs.filter(t => !existingIds.has(t.id));
-
-      const updated = [...newUniqueTxs, ...prev];
-      SecureStorageService.set('transactions', updated).catch(e =>
-        log.error('App','Failed to save transactions:', e)
-      );
-      WidgetService.updateWidgets(); // Update widgets
-      return updated;
-    });
+    const { unique, skipped } = dedupeTransactions(transactions, txs);
+    if (unique.length > 0) {
+      setTransactions(prev => {
+        const next = dedupeTransactions(prev, unique).unique;
+        const updated = [...next, ...prev];
+        SecureStorageService.set('transactions', updated).catch(e =>
+          log.error('App','Failed to save transactions:', e)
+        );
+        WidgetService.updateWidgets();
+        return updated;
+      });
+    }
+    return { added: unique.length, skipped };
   };
 
   const deleteTransaction = (id: string) => {

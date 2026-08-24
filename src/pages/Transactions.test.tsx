@@ -90,6 +90,21 @@ describe('Transactions page', () => {
     expect(onBulkAdd).toHaveBeenCalledWith([sampleTx]);
   });
 
+  it('mentions skipped duplicates after SMS sync', async () => {
+    onBulkAdd.mockReturnValue({ added: 1, skipped: 2 });
+    render(
+      <Transactions
+        transactions={[]}
+        categories={categories}
+        onDelete={vi.fn()}
+        onAdd={vi.fn()}
+        onBulkAdd={onBulkAdd}
+      />
+    );
+    fireEvent.click(screen.getByText('Sync SMS'));
+    expect(await screen.findByText('Synced 1 new transactions (2 duplicates skipped)')).toBeTruthy();
+  });
+
   it('shows an error toast when SMS sync fails', async () => {
     vi.mocked(fetchAllSmsTransactions).mockRejectedValue(new Error('permission denied'));
     vi.spyOn(window, 'alert').mockImplementation(() => undefined);
