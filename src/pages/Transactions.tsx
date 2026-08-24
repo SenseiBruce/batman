@@ -11,6 +11,7 @@ import { PullToRefresh } from '../components/PullToRefresh';
 import { HapticService } from '../services/hapticService';
 import { CalendarView } from '../components/CalendarView';
 import { exportToCSV } from '../utils/export';
+import { BulkAddResult, coalesceBulkAddResult } from '../utils/transactionDedup';
 import { Capacitor } from '@capacitor/core';
 import { SecureStorageService } from '../services/secureStorageService';
 import { TimeCostDisplay } from '../components/TimeCostDisplay';
@@ -21,7 +22,7 @@ interface TransactionsProps {
   categories: Category[];
   onDelete: (id: string) => void;
   onAdd: (t: Transaction) => void;
-  onBulkAdd: (txs: Transaction[]) => { added: number; skipped: number } | void;
+  onBulkAdd: (txs: Transaction[]) => BulkAddResult | void;
   onUpdate?: (tx: Transaction) => void;
 }
 
@@ -81,7 +82,7 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
     try {
       const newTxs = await fetchAllSmsTransactions();
       if (newTxs.length > 0) {
-        const result = onBulkAdd(newTxs) ?? { added: newTxs.length, skipped: 0 };
+        const result = coalesceBulkAddResult(onBulkAdd(newTxs), newTxs.length);
         if (result.added === 0) {
           const skippedNote = result.skipped > 0 ? ` (${result.skipped} duplicates skipped)` : '';
           setSyncStatus('No new transactions found');
@@ -130,7 +131,7 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
       const newTxs = await parseStatement(file);
 
       if (newTxs.length > 0) {
-        const result = onBulkAdd(newTxs) ?? { added: newTxs.length, skipped: 0 };
+        const result = coalesceBulkAddResult(onBulkAdd(newTxs), newTxs.length);
         if (result.added === 0) {
           const skippedNote = result.skipped > 0 ? ` (${result.skipped} duplicates skipped)` : '';
           setSyncStatus('No transactions found in file');

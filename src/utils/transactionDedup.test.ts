@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Transaction } from '../types';
-import { dedupeTransactions, transactionFingerprint } from './transactionDedup';
+import { coalesceBulkAddResult, dedupeTransactions, transactionFingerprint } from './transactionDedup';
 
 const base: Transaction = {
   id: 'a',
@@ -38,5 +38,10 @@ describe('transactionDedup', () => {
     const { unique, skipped } = dedupeTransactions([], incoming);
     expect(unique).toHaveLength(1);
     expect(skipped).toBe(1);
+  });
+
+  it('coalesces void bulk-add results to a fallback added count', () => {
+    expect(coalesceBulkAddResult(undefined, 4)).toEqual({ added: 4, skipped: 0 });
+    expect(coalesceBulkAddResult({ added: 2, skipped: 3 }, 9)).toEqual({ added: 2, skipped: 3 });
   });
 });
