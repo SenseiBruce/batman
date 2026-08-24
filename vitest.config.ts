@@ -24,6 +24,7 @@ export default defineConfig({
         'src/utils/goalsSummary.ts',
         'src/utils/topMerchantsSummary.ts',
         'src/utils/predictionsSummary.ts',
+        'src/utils/dailyInsightSummary.ts',
         'src/contexts/JarvisContext.tsx',
         'src/components/settings/**/*.{ts,tsx}',
       ],
