@@ -17,6 +17,8 @@ All notable changes to Jarvis Expense Tracker are documented here.
 
 - SMS and statement imports skip merchant+amount+day duplicates, even when IDs differ
 
+- Insights "Copy summary" copies a plain-text month report (expenses, budget left, avg/day, MoM, top categories)
+
 ## 1.1.0 - 2026-08-19
 
 ### Added
