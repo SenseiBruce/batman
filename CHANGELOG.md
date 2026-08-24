@@ -26,6 +26,7 @@ All notable changes to Jarvis Expense Tracker are documented here.
 - Subscriptions “Copy summary” copies merchants, cadence, next due dates, and estimated monthly cost
 - Savings Goals widget can copy a text summary of progress (saved vs target, completed count).
 - Insights Top Merchants card can copy a ranked spend summary to the clipboard
+- Dashboard AI Predictions card can copy insight/forecast counts to the clipboard
 
 ## 1.1.0 - 2026-08-19
 
