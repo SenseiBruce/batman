@@ -22,6 +22,7 @@ export default defineConfig({
         'src/utils/localBackupExport.ts',
         'src/utils/subscriptionSummary.ts',
         'src/utils/goalsSummary.ts',
+        'src/utils/topMerchantsSummary.ts',
         'src/contexts/JarvisContext.tsx',
         'src/components/settings/**/*.{ts,tsx}',
       ],
