@@ -13,6 +13,8 @@ All notable changes to Jarvis Expense Tracker are documented here.
 - Persist merchant → category corrections so the next SMS from that merchant is auto-categorized
 - Tests for merchant learning and the review modal
 
+- Transaction CSV export now respects the current search, month, and filter selection
+
 ## 1.1.0 - 2026-08-19
 
 ### Added
