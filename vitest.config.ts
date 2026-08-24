@@ -18,6 +18,7 @@ export default defineConfig({
         'src/services/splitService.ts',
         'src/utils/logger.ts',
         'src/utils/parser.ts',
+        'src/utils/budgetAnalysisSummary.ts',
         'src/contexts/JarvisContext.tsx',
         'src/components/settings/**/*.{ts,tsx}',
       ],
