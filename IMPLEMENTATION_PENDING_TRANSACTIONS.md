@@ -105,13 +105,12 @@ Implemented a comprehensive pending transaction review system that allows users 
   - Mobile-friendly bottom sheet design
 
 ## Future Enhancements
-1. **Batch Operations**: Approve all, or approve by category
-2. **Smart Learning**: Remember user corrections to improve auto-categorization
-3. **Gemini AI Integration**: Use AI for initial categorization instead of keywords
-4. **Notification System**: Alert users when new pending transactions arrive
-5. **Category Suggestions**: Show multiple category options with confidence scores
-6. **Transaction Editing**: Allow editing amount, merchant, and date in review modal
-7. **Review History**: Track which transactions were auto-approved vs manually changed
+1. **Batch Operations**: Approve by category
+2. **Gemini AI Integration**: Use AI for initial categorization instead of keywords
+3. **Notification System**: Alert users when new pending transactions arrive
+4. **Category Suggestions**: Show multiple category options with confidence scores
+5. **Transaction Editing**: Allow editing amount, merchant, and date in review modal
+6. **Review History**: Track which transactions were auto-approved vs manually changed
 
 ## Technical Notes
 - All changes maintain backward compatibility
