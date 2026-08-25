@@ -36,6 +36,7 @@ import { JarvisProvider } from './contexts/JarvisContext';
 import { JarvisNotificationBubble } from './components/JarvisNotificationBubble';
 import { Toaster } from 'react-hot-toast';
 import { log } from './utils/logger';
+import { loadSelectedMonth, persistSelectedMonth } from './utils/selectedMonth';
 
 // ... (existing imports)
 
@@ -44,7 +45,7 @@ const App: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
-  const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // YYYY-MM format
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => loadSelectedMonth());
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isCreateSplitModalOpen, setIsCreateSplitModalOpen] = useState(false);
   const location = useLocation();
@@ -52,6 +53,10 @@ const App: React.FC = () => {
   const [, setIsSyncing] = useState(false);
 
   // ... (existing effects)
+
+  useEffect(() => {
+    persistSelectedMonth(selectedMonth);
+  }, [selectedMonth]);
 
   // Auto-Backup with Debounce
   useEffect(() => {
