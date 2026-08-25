@@ -2,6 +2,10 @@
 
 All notable changes to Jarvis Expense Tracker are documented here.
 
+## Unreleased
+
+- Budget Analysis card can copy a text summary of spend vs budget.
+
 ## 1.1.0 - 2026-08-19
 
 ### Added
