@@ -31,6 +31,7 @@ All notable changes to Jarvis Expense Tracker are documented here.
 - Accounts page can copy net worth and account balances as text
 - Persist the dashboard/insights selected month (`YYYY-MM`) in `localStorage` so it survives reloads
 - Persist the Transactions page month filter (`YYYY-MM`) in `localStorage`
+- Persist Transactions list vs calendar view in `localStorage`
 
 ## 1.1.0 - 2026-08-19
 
