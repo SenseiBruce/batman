@@ -29,8 +29,6 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 
     useEffect(() => {
         onSearchChange(searchQuery);
-        // Restore the persisted query into the parent filter once on mount.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
