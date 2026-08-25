@@ -16,6 +16,7 @@ import { Capacitor } from '@capacitor/core';
 import { SecureStorageService } from '../services/secureStorageService';
 import { TimeCostDisplay } from '../components/TimeCostDisplay';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { loadTxSelectedMonth, persistTxSelectedMonth } from '../utils/txSelectedMonth';
 
 interface TransactionsProps {
   transactions: Transaction[];
@@ -30,7 +31,7 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
   const { formatAmount } = useCurrency();
   const [isSyncing, setIsSyncing] = useState(false);
   const [, setSyncStatus] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [selectedMonth, setSelectedMonth] = useState(loadTxSelectedMonth);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -39,6 +40,10 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
   // Category editing state
   const [editingTransaction, setEditingTransaction] = useState<string | null>(null);
   const [showSmsDisclosure, setShowSmsDisclosure] = useState(false);
+
+  useEffect(() => {
+    persistTxSelectedMonth(selectedMonth);
+  }, [selectedMonth]);
 
   useEffect(() => {
     SecureStorageService.get<string>('hourly_wage').then(wage => {
