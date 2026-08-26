@@ -69,6 +69,7 @@ describe('Transactions page', () => {
 
   beforeEach(() => {
     onBulkAdd.mockReset();
+    localStorage.clear();
     vi.mocked(checkSmsPermissionsOnly).mockResolvedValue(true);
     vi.mocked(fetchAllSmsTransactions).mockResolvedValue([sampleTx]);
     vi.mocked(exportToCSV).mockReset();
@@ -147,6 +148,14 @@ describe('Transactions page', () => {
     render(
       <Transactions
         transactions={[sampleTx, otherTx]}
+  it('restores the persisted transaction date range', async () => {
+    localStorage.setItem(
+      'jarvis_tx_date_range',
+      JSON.stringify({ dateFrom: '2024-01-01', dateTo: '2024-01-31' }),
+    );
+    const { container } = render(
+      <Transactions
+        transactions={[sampleTx]}
         categories={categories}
         onDelete={vi.fn()}
         onAdd={vi.fn()}
@@ -163,5 +172,13 @@ describe('Transactions page', () => {
 
     fireEvent.click(screen.getByText('Export'));
     await waitFor(() => expect(exportToCSV).toHaveBeenCalledWith([sampleTx]));
+      />,
+    );
+    const filterToggle = container.querySelector('button.px-4.py-3.rounded-lg.font-medium');
+    expect(filterToggle).toBeTruthy();
+    fireEvent.click(filterToggle as HTMLButtonElement);
+    const dates = container.querySelectorAll('input[type="date"]');
+    expect((dates[0] as HTMLInputElement).value).toBe('2024-01-01');
+    expect((dates[1] as HTMLInputElement).value).toBe('2024-01-31');
   });
 });
