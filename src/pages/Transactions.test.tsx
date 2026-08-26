@@ -152,6 +152,10 @@ describe('Transactions page', () => {
     localStorage.setItem(
       'jarvis_tx_date_range',
       JSON.stringify({ dateFrom: '2024-01-01', dateTo: '2024-01-31' }),
+  it('restores the persisted transaction amount range', () => {
+    localStorage.setItem(
+      'jarvis_tx_amount_range',
+      JSON.stringify({ amountMin: '10', amountMax: '500' }),
     );
     const { container } = render(
       <Transactions
@@ -180,5 +184,8 @@ describe('Transactions page', () => {
     const dates = container.querySelectorAll('input[type="date"]');
     expect((dates[0] as HTMLInputElement).value).toBe('2024-01-01');
     expect((dates[1] as HTMLInputElement).value).toBe('2024-01-31');
+    const amounts = container.querySelectorAll('input[type="number"]');
+    expect((amounts[0] as HTMLInputElement).value).toBe('10');
+    expect((amounts[1] as HTMLInputElement).value).toBe('500');
   });
 });
