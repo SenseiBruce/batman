@@ -35,6 +35,9 @@ import { CloudAuthService } from '../../services/cloudAuthService';
 import { SyncService } from '../../services/syncService';
 import toast from 'react-hot-toast';
 import { collectLocalBackup, downloadJson } from '../../utils/localBackupExport';
+import { CloudAuthService } from '../../services/cloudAuthService';
+import { SyncService } from '../../services/syncService';
+import toast from 'react-hot-toast';
 
 const signedInUser = {
   uid: 'u1',
@@ -53,6 +56,7 @@ describe('BackupRestorePanel', () => {
   it('backs up after confirm and shows a success toast', async () => {
     render(<BackupRestorePanel />);
     fireEvent.click(await screen.findByRole('button', { name: /^Backup$/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /Backup/i }));
     await waitFor(() => expect(SyncService.backupToCloud).toHaveBeenCalled());
     expect(toast.success).toHaveBeenCalled();
   });
@@ -72,5 +76,9 @@ describe('BackupRestorePanel', () => {
     await waitFor(() => expect(collectLocalBackup).toHaveBeenCalled());
     expect(downloadJson).toHaveBeenCalled();
     expect(toast.success).toHaveBeenCalled();
+  });
+    fireEvent.click(await screen.findByRole('button', { name: /Backup/i }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /Backup/i })).toBeTruthy());
+    expect(SyncService.backupToCloud).not.toHaveBeenCalled();
   });
 });

@@ -6,6 +6,7 @@ import {
   scheduleBudgetAlert,
   schedulePendingTransactionsAlert,
 } from '../utils/notify';
+import { requestPushPermission, registerPushListeners, scheduleBudgetAlert, schedulePendingTransactionsAlert } from '../utils/notify';
 import { shareBudgetImage } from '../utils/shareBudget';
 import { SmartInsightCard } from '../components/SmartInsightCard';
 import { generateDailyInsight } from '../services/insightService';
@@ -50,6 +51,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   onAddGoal,
   onUpdateGoal,
   onDeleteGoal,
+  onDeleteGoal
 }) => {
   const { currencySymbol, formatAmount } = useCurrency();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -61,6 +63,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const pendingTransactions = transactions.filter((t) => t.isPending);
+  const pendingTransactions = transactions.filter(t => t.isPending);
   const notifiedRef = useRef<Set<string>>(new Set());
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -71,6 +74,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     window.addEventListener('openPendingTransactionsReview', handleOpenPendingReview);
     return () =>
       window.removeEventListener('openPendingTransactionsReview', handleOpenPendingReview);
+    return () => window.removeEventListener('openPendingTransactionsReview', handleOpenPendingReview);
   }, []);
 
   useEffect(() => {
@@ -87,6 +91,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const monthlyTransactions = transactions.filter((t) => {
+  const monthlyTransactions = transactions.filter(t => {
     const d = new Date(t.date);
     const tMonth = d.toISOString().slice(0, 7);
     return tMonth === selectedMonth && t.type === 'debit';
@@ -94,6 +99,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const getSpent = (catName: string) =>
     monthlyTransactions.filter((t) => t.category === catName).reduce((acc, t) => acc + t.amount, 0);
+    monthlyTransactions.filter(t => t.category === catName).reduce((acc, t) => acc + t.amount, 0);
 
   const handleSave = (cat: Category) => {
     const newBudget = parseFloat(editAmount);
@@ -108,6 +114,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     setIsSharing(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 100));
       await shareBudgetImage(contentRef.current, selectedMonth, formatMonth(selectedMonth));
     } catch (e) {
       console.error('Error sharing budget:', e);
@@ -128,6 +135,11 @@ const Dashboard: React.FC<DashboardProps> = ({
       ref={contentRef}
       className="pb-24 pt-6 px-4 max-w-md mx-auto min-h-screen bg-gray-900 relative"
     >
+    ? transactions.filter(t => t.category === selectedCategory.name)
+    : [];
+
+  return (
+    <div ref={contentRef} className="pb-24 pt-6 px-4 max-w-md mx-auto min-h-screen bg-gray-900 relative">
       <header className="mb-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-3xl font-bold text-white">Dashboard</h1>
@@ -163,6 +175,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                     d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
                   />
                 </svg>
+                <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
               )}
             </button>
           </div>
@@ -173,6 +188,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             window.location.hash = '#/budget-settings';
           }}
         />
+        <DashboardQuickActions onOpenBudgetSettings={() => { window.location.hash = '#/budget-settings'; }} />
 
         {pendingTransactions.length > 0 && (
           <button
@@ -191,6 +207,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
           </button>
         )}
 
@@ -216,6 +233,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 d="M15 19l-7-7 7-7"
               />
             </svg>
+            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </button>
           <span className="font-semibold text-white">{formatMonth(selectedMonth)}</span>
           <button
@@ -234,6 +252,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
+            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
           </button>
         </div>
       </header>
@@ -255,6 +274,10 @@ const Dashboard: React.FC<DashboardProps> = ({
         onUpdateGoal={onUpdateGoal}
         onDeleteGoal={onDeleteGoal}
       />
+      <BudgetAnalysisCard categories={categories} transactions={monthlyTransactions} selectedMonth={selectedMonth} />
+      <PredictionsCard transactions={transactions} categories={categories} selectedMonth={selectedMonth} />
+      <SmartInsightCard insight={dailyInsight} />
+      <GoalsWidget goals={goals} onAddGoal={onAddGoal} onUpdateGoal={onUpdateGoal} onDeleteGoal={onDeleteGoal} />
 
       <AddCategoryModal
         isOpen={showAddModal}
@@ -295,6 +318,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                 duration={1200}
                 delay={100}
               />
+            <p className={`text-2xl font-bold ${totalSpent > totalBudget ? 'text-red-400' : 'text-white'}`}>
+              <AnimatedNumber value={totalSpent} prefix={currencySymbol} duration={1200} delay={100} />
             </p>
           </div>
         </div>
@@ -325,6 +350,12 @@ const Dashboard: React.FC<DashboardProps> = ({
                 d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
                 clipRule="evenodd"
               />
+          color={totalSpent > totalBudget ? 'bg-red-500' : totalSpent > totalBudget * 0.9 ? 'bg-orange-500' : totalSpent > totalBudget * 0.75 ? 'bg-yellow-500' : 'bg-green-500'}
+        />
+        {totalSpent > totalBudget && (
+          <div className="mt-3 flex items-center text-red-400 text-xs bg-red-400/10 p-2 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
             You have exceeded your total monthly budget.
           </div>
@@ -333,6 +364,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       <div className="space-y-4">
         {categories.map((cat) => {
+        {categories.map(cat => {
           const spent = getSpent(cat.name);
           const percentage = Math.min((spent / cat.budget) * 100, 100);
           const isOver = spent > cat.budget;
@@ -380,6 +412,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-gray-700/50 shadow-md"
                     style={{ color: cat.color }}
                   >
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-gray-700/50 shadow-md" style={{ color: cat.color }}>
                     {cat.icon}
                   </div>
                   <div>
@@ -389,6 +422,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                       <span className={isOver ? 'text-red-400 font-medium' : 'text-gray-200'}>
                         {formatAmount(spent)}
                       </span>
+                      Spent: <span className={isOver ? 'text-red-400 font-medium' : 'text-gray-200'}>{formatAmount(spent)}</span>
                     </p>
                   </div>
                 </div>
@@ -420,6 +454,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                           >
                             <polyline points="20 6 9 17 4 12" />
                           </svg>
+                        <button onClick={() => handleSave(cat)} className="text-green-400 hover:text-green-300">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                         </button>
                       </div>
                       <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
@@ -457,6 +493,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                           >
                             <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
                           </svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" /></svg>
                         </button>
                       </div>
                       <div className="flex items-center gap-1">
@@ -464,6 +501,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         {!alertsEnabled && (
                           <span className="text-[10px] text-gray-600">(Alerts Off)</span>
                         )}
+                        {!alertsEnabled && <span className="text-[10px] text-gray-600">(Alerts Off)</span>}
                       </div>
                     </div>
                   )}
@@ -516,6 +554,9 @@ const Dashboard: React.FC<DashboardProps> = ({
         }}
         onDiscard={(tx) => {
           if (onDeleteTransaction) onDeleteTransaction(tx.id);
+        }}
+        onApproveAll={(txs) => {
+          if (onUpdateBulkTransactions) onUpdateBulkTransactions(txs);
         }}
       />
     </div>
