@@ -159,6 +159,14 @@ describe('Transactions page', () => {
     );
     const { container } = render(
       <Transactions
+  it('copies the visible transaction count', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+    render(
+      <Transactions
         transactions={[sampleTx]}
         categories={categories}
         onDelete={vi.fn()}
@@ -187,5 +195,12 @@ describe('Transactions page', () => {
     const amounts = container.querySelectorAll('input[type="number"]');
     expect((amounts[0] as HTMLInputElement).value).toBe('10');
     expect((amounts[1] as HTMLInputElement).value).toBe('500');
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Copy visible transaction count' }));
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith('Visible transactions: 1');
+    });
+    expect(await screen.findByText('Copied visible transaction count')).toBeTruthy();
   });
 });
