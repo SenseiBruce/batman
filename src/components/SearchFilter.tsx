@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Category } from '../types';
 import { loadTxSearchQuery, persistTxSearchQuery } from '../utils/txSearchQuery';
+import { loadTxCategoryFilter, persistTxCategoryFilter } from '../utils/txCategoryFilter';
 
 interface SearchFilterProps {
     onSearchChange: (query: string) => void;
@@ -25,7 +26,18 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 }) => {
     const [searchQuery, setSearchQuery] = useState(() => loadTxSearchQuery());
     const [showFilters, setShowFilters] = useState(false);
-    const [filters, setFilters] = useState<FilterState>(currentFilters);
+    const [filters, setFilters] = useState<FilterState>(() => ({
+        ...currentFilters,
+        category: loadTxCategoryFilter() || currentFilters.category,
+    }));
+
+    useEffect(() => {
+        onFilterChange(filters);
+    }, []);
+
+    useEffect(() => {
+        persistTxCategoryFilter(filters.category);
+    }, [filters.category]);
 
     useEffect(() => {
         onSearchChange(searchQuery);

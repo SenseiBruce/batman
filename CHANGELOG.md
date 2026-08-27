@@ -6,6 +6,7 @@ All notable changes to Jarvis Expense Tracker are documented here.
 
 - Insights Days Left card can copy remaining days in the month.
 - Persist the Transactions merchant search query across reloads.
+- Persist the Transactions category filter across reloads.
 - Budget Analysis card can copy a text summary of spend vs budget.
 ## [Unreleased]
 
