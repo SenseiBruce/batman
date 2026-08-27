@@ -1,5 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Category } from '../types';
+import { loadTxSearchQuery, persistTxSearchQuery } from '../utils/txSearchQuery';
 
 interface SearchFilterProps {
     onSearchChange: (query: string) => void;
@@ -22,9 +23,17 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
     categories,
     currentFilters
 }) => {
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState(() => loadTxSearchQuery());
     const [showFilters, setShowFilters] = useState(false);
     const [filters, setFilters] = useState<FilterState>(currentFilters);
+
+    useEffect(() => {
+        onSearchChange(searchQuery);
+    }, []);
+
+    useEffect(() => {
+        persistTxSearchQuery(searchQuery);
+    }, [searchQuery]);
 
     const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const query = e.target.value;
