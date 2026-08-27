@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { preferencesGet } = vi.hoisted(() => ({
+const { preferencesGet, getLearnedCategory } = vi.hoisted(() => ({
   preferencesGet: vi.fn(async () => ({ value: null as string | null })),
+  getLearnedCategory: vi.fn(async (_merchant?: string) => null as string | null),
 }));
 
 vi.mock('@capacitor/preferences', () => ({
@@ -31,6 +32,13 @@ vi.mock('./secureStorageService', () => ({
 
 vi.mock('./geminiCategorizationService', () => ({
   GeminiCategorizationService: vi.fn(),
+}));
+
+vi.mock('./merchantLearningService', () => ({
+  MerchantLearningService: {
+    getLearnedCategory: (merchant: string) => getLearnedCategory(merchant),
+    learnMapping: vi.fn(),
+  },
 }));
 
 import { parseSmsToTransaction, smartCategorize } from './smsService';
@@ -72,9 +80,7 @@ describe('smartCategorize', () => {
   });
 
   it('maps tiny unknown amounts to UPI Transactions', () => {
-    expect(smartCategorize('Unknown', 20, 'Rs. 20 sent via UPI', 'Other')).toBe(
-      'UPI Transactions'
-    );
+    expect(smartCategorize('Unknown', 20, 'Rs. 20 sent via UPI', 'Other')).toBe('UPI Transactions');
   });
 
   it('keeps the keyword fallback when no heuristic matches', () => {
@@ -87,6 +93,7 @@ describe('smartCategorize', () => {
 describe('parseSmsToTransaction', () => {
   beforeEach(() => {
     preferencesGet.mockResolvedValue({ value: null });
+    getLearnedCategory.mockResolvedValue(null);
   });
 
   it('returns null for promotional / spam messages', async () => {
@@ -172,6 +179,17 @@ describe('parseSmsToTransaction', () => {
     expect(result).not.toBeNull();
     expect(result!.merchant).toBe('Rahul Kumar');
     expect(result!.category).toBe('Personal Transfers');
+  });
+
+  it('prefers a learned merchant category over keyword matching', async () => {
+    getLearnedCategory.mockResolvedValue('Shopping');
+    const result = await parseSmsToTransaction(
+      'Rs. 450 sent To Swiggy On 15-08-2026 Ref LEARN1. Your A/c has been debited.',
+      smsDate,
+      'VM-HDFCBK'
+    );
+    expect(result).not.toBeNull();
+    expect(result!.category).toBe('Shopping');
   });
 
   it('filters out messages that look like stock or SIP purchase alerts', async () => {

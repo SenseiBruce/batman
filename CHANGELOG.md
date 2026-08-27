@@ -6,6 +6,12 @@ All notable changes to Jarvis Expense Tracker are documented here.
 
 - Insights Days Left card can copy remaining days in the month.
 - Budget Analysis card can copy a text summary of spend vs budget.
+## [Unreleased]
+
+### Added
+- Skip button in pending SMS review to discard false positives
+- Persist merchant → category corrections so the next SMS from that merchant is auto-categorized
+- Tests for merchant learning and the review modal
 
 ## 1.1.0 - 2026-08-19
 
