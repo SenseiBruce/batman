@@ -10,6 +10,7 @@ import { SpendingCharts } from '../components/insights/SpendingCharts';
 import { formatDaysLeft } from '../utils/daysLeftCopy';
 import toast from 'react-hot-toast';
 import { formatMonthSummary } from '../utils/monthSummary';
+import { formatSpendingForecast } from '../utils/spendingForecastCopy';
 
 interface InsightsProps {
   transactions: Transaction[];
@@ -360,13 +361,44 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
             const projectedTotal = dailyAvg * daysInMonthTotal;
             const isOverBudget = projectedTotal > totalBudget;
 
+            const monthLabel = new Date(selectedMonth + '-01').toLocaleDateString('en-US', {
+              month: 'long',
+              year: 'numeric',
+            });
+
             return (
               <div className={`p-4 rounded-xl border ${isOverBudget ? 'bg-red-900/20 border-red-500/30' : 'bg-green-900/20 border-green-500/30'} mb-6`}>
                 <div className="flex justify-between items-start">
                   <div>
+                    <div className="flex items-center justify-between gap-2">
                     <p className={`text-sm font-bold uppercase tracking-wider ${isOverBudget ? 'text-red-400' : 'text-green-400'}`}>
                       {isOverBudget ? '⚠️ Projected Overspend' : '✅ On Track'}
                     </p>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(
+                            formatSpendingForecast({
+                              monthLabel,
+                              projectedTotal,
+                              overBudget: isOverBudget,
+                              totalBudget,
+                              dailyAvg,
+                              dayOfMonth,
+                              daysInMonth: daysInMonthTotal,
+                            }),
+                          );
+                        } catch {
+                          /* clipboard may be unavailable */
+                        }
+                      }}
+                      className={`text-xs ${isOverBudget ? 'text-red-300 hover:text-red-200' : 'text-green-300 hover:text-green-200'}`}
+                      aria-label="Copy spending forecast"
+                    >
+                      Copy forecast
+                    </button>
+                    </div>
                     <p className="text-3xl font-bold text-white mt-1">
                       <AnimatedNumber value={projectedTotal} prefix="₹" duration={1500} />
                     </p>
