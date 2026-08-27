@@ -27,6 +27,7 @@ export default defineConfig({
         'src/utils/dailyInsightSummary.ts',
         'src/utils/accountsSummary.ts',
         'src/utils/selectedMonth.ts',
+        'src/utils/txSelectedMonth.ts',
         'src/contexts/JarvisContext.tsx',
         'src/components/settings/**/*.{ts,tsx}',
       ],
