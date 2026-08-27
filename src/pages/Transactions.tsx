@@ -11,6 +11,7 @@ import { PullToRefresh } from '../components/PullToRefresh';
 import { HapticService } from '../services/hapticService';
 import { CalendarView } from '../components/CalendarView';
 import { exportToCSV } from '../utils/export';
+import { BulkAddResult, coalesceBulkAddResult } from '../utils/transactionDedup';
 import { Capacitor } from '@capacitor/core';
 import { SecureStorageService } from '../services/secureStorageService';
 import { TimeCostDisplay } from '../components/TimeCostDisplay';
@@ -21,7 +22,7 @@ interface TransactionsProps {
   categories: Category[];
   onDelete: (id: string) => void;
   onAdd: (t: Transaction) => void;
-  onBulkAdd: (txs: Transaction[]) => void;
+  onBulkAdd: (txs: Transaction[]) => BulkAddResult | void;
   onUpdate?: (tx: Transaction) => void;
 }
 
@@ -81,12 +82,22 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
     try {
       const newTxs = await fetchAllSmsTransactions();
       if (newTxs.length > 0) {
-        onBulkAdd(newTxs);
-        setSyncStatus(`Synced ${newTxs.length} new transactions`);
-        setToastMessage(`Synced ${newTxs.length} new transactions`);
-        setToastType('success');
-        setToastVisible(true);
-        HapticService.success();
+        const result = coalesceBulkAddResult(onBulkAdd(newTxs), newTxs.length);
+        if (result.added === 0) {
+          const skippedNote = result.skipped > 0 ? ` (${result.skipped} duplicates skipped)` : '';
+          setSyncStatus('No new transactions found');
+          setToastMessage(`No new transactions found${skippedNote}`);
+          setToastType('info');
+          setToastVisible(true);
+          HapticService.light();
+        } else {
+          const skippedNote = result.skipped > 0 ? ` (${result.skipped} duplicates skipped)` : '';
+          setSyncStatus(`Synced ${result.added} new transactions`);
+          setToastMessage(`Synced ${result.added} new transactions${skippedNote}`);
+          setToastType('success');
+          setToastVisible(true);
+          HapticService.success();
+        }
       } else {
         setSyncStatus('No new transactions found');
         HapticService.light();
@@ -120,12 +131,22 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
       const newTxs = await parseStatement(file);
 
       if (newTxs.length > 0) {
-        onBulkAdd(newTxs);
-        setSyncStatus(`Imported ${newTxs.length} transactions`);
-        setToastMessage(`Imported ${newTxs.length} transactions`);
-        setToastType('success');
-        setToastVisible(true);
-        HapticService.success();
+        const result = coalesceBulkAddResult(onBulkAdd(newTxs), newTxs.length);
+        if (result.added === 0) {
+          const skippedNote = result.skipped > 0 ? ` (${result.skipped} duplicates skipped)` : '';
+          setSyncStatus('No transactions found in file');
+          setToastMessage(`No new transactions found${skippedNote}`);
+          setToastType('info');
+          setToastVisible(true);
+          HapticService.light();
+        } else {
+          const skippedNote = result.skipped > 0 ? ` (${result.skipped} duplicates skipped)` : '';
+          setSyncStatus(`Imported ${result.added} transactions`);
+          setToastMessage(`Imported ${result.added} transactions${skippedNote}`);
+          setToastType('success');
+          setToastVisible(true);
+          HapticService.success();
+        }
       } else {
         setSyncStatus('No transactions found in file');
         HapticService.light();
