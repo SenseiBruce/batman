@@ -23,6 +23,7 @@ export default defineConfig({
         'src/utils/subscriptionSummary.ts',
         'src/utils/goalsSummary.ts',
         'src/utils/topMerchantsSummary.ts',
+        'src/utils/predictionsSummary.ts',
         'src/contexts/JarvisContext.tsx',
         'src/components/settings/**/*.{ts,tsx}',
       ],
