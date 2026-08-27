@@ -8,6 +8,8 @@ import { HapticService } from '../services/hapticService';
 import { MonthComparison } from '../components/insights/MonthComparison';
 import { SpendingCharts } from '../components/insights/SpendingCharts';
 import { formatDaysLeft } from '../utils/daysLeftCopy';
+import toast from 'react-hot-toast';
+import { formatMonthSummary } from '../utils/monthSummary';
 
 interface InsightsProps {
   transactions: Transaction[];
@@ -125,6 +127,32 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 4);
 
+  const copyMonthSummary = async () => {
+    const monthLabel = new Date(selectedMonth + '-01').toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric',
+    });
+    const text = formatMonthSummary({
+      monthLabel,
+      categoryFilter: selectedCategory,
+      expenses: totalExpenses,
+      budgetLeft,
+      budgetProgress,
+      avgDaily: avgDailySpending,
+      expenseChange,
+      hasPreviousMonth: prevTotalExpenses > 0,
+      topCategories: [...categoryData].sort((a, b) => b.value - a.value).slice(0, 3),
+    });
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Summary copied');
+      HapticService.success();
+    } catch {
+      toast.error('Could not copy summary');
+      HapticService.error();
+    }
+  };
+
   const toggleCategory = (name: string) => {
     setSelectedCategory((prev) => (prev === name ? null : name));
   };
@@ -175,6 +203,16 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
             <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
           </button>
         </div>
+        <button
+          type="button"
+          onClick={() => {
+            HapticService.light();
+            void copyMonthSummary();
+          }}
+          className="mt-2 w-full py-2 text-sm font-medium text-indigo-300 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg transition-colors"
+        >
+          Copy summary
+        </button>
       </header>
 
       {/* Active Filter Badge */}
