@@ -46,6 +46,7 @@ const App: React.FC = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => loadSelectedMonth());
+  const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // YYYY-MM format
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isCreateSplitModalOpen, setIsCreateSplitModalOpen] = useState(false);
   const location = useLocation();
@@ -315,6 +316,18 @@ const App: React.FC = () => {
       });
     }
     return { added: unique.length, skipped };
+    setTransactions(prev => {
+      // Filter out duplicates based on id
+      const existingIds = new Set(prev.map(t => t.id));
+      const newUniqueTxs = txs.filter(t => !existingIds.has(t.id));
+
+      const updated = [...newUniqueTxs, ...prev];
+      SecureStorageService.set('transactions', updated).catch(e =>
+        log.error('App','Failed to save transactions:', e)
+      );
+      WidgetService.updateWidgets(); // Update widgets
+      return updated;
+    });
   };
 
   const deleteTransaction = (id: string) => {

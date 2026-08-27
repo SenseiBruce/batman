@@ -333,6 +333,9 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
             >
               Copy days left
             </button>
+          <div className="flex items-center gap-2 mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-400"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span className="text-xs text-orange-300 font-medium">Days Left</span>
           </div>
           <p className="text-2xl font-bold text-white">
             <AnimatedNumber value={daysLeft > 0 ? daysLeft : daysInMonth} duration={800} delay={300} />

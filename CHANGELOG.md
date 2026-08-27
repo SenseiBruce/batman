@@ -38,6 +38,7 @@ All notable changes to Jarvis Expense Tracker are documented here.
 - Persist the dashboard/insights selected month (`YYYY-MM`) in `localStorage` so it survives reloads
 - Persist the Transactions page month filter (`YYYY-MM`) in `localStorage`
 - Persist Transactions list vs calendar view in `localStorage`
+- Settings can copy the hourly wage estimate.
 
 ## 1.1.0 - 2026-08-19
 

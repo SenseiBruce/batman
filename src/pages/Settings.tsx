@@ -13,6 +13,7 @@ import { log } from '../utils/logger';
 import { ApiKeyModal } from '../components/settings/ApiKeyModal';
 import { PinChangeModal } from '../components/settings/PinChangeModal';
 import { BackupRestorePanel } from '../components/settings/BackupRestorePanel';
+import { formatHourlyWage } from '../utils/hourlyWageCopy';
 
 interface SettingsProps {
   onClearTransactions?: () => void;
@@ -138,6 +139,23 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Hourly Wage Estimate ($)</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-300">Hourly Wage Estimate ($)</label>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(formatHourlyWage(hourlyWage));
+                    } catch {
+                      /* clipboard may be unavailable */
+                    }
+                  }}
+                  className="text-xs text-orange-400 hover:text-orange-300"
+                  aria-label="Copy hourly wage"
+                >
+                  Copy wage
+                </button>
+              </div>
               <input
                 type="number"
                 value={hourlyWage}

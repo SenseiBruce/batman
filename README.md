@@ -14,6 +14,7 @@ src/
   contexts/     React context (currency, Jarvis chat)
   config/       Firebase web SDK init from VITE_ env vars
   utils/        Notifications, export, share-to-image, local JSON backup
+  utils/        Notifications, export, share-to-image
 android/        Capacitor Android project (SMS reader, Firebase Auth)
 ```
 
@@ -81,6 +82,18 @@ Copy `.env.example` to `.env.local` for Vite, or `.env` for Docker Compose.
 | `GEMINI_API_KEY`                    | Same key; also used by some AI Studio tooling       |
 | `VITE_DEBUG`                        | `true` to emit structured logs in production builds |
 | `VITE_SENTRY_DSN`                   | Optional Sentry DSN for uncaught errors             |
+| Variable | Purpose |
+| --- | --- |
+| `VITE_FIREBASE_API_KEY` | Firebase web API key |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Firebase auth domain |
+| `VITE_FIREBASE_PROJECT_ID` | Firebase project id |
+| `VITE_FIREBASE_STORAGE_BUCKET` | Cloud Storage bucket |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | FCM sender id |
+| `VITE_FIREBASE_APP_ID` | Firebase app id |
+| `VITE_GEMINI_API_KEY` | Optional default Gemini key for web builds |
+| `GEMINI_API_KEY` | Same key; also used by some AI Studio tooling |
+| `VITE_DEBUG` | `true` to emit structured logs in production builds |
+| `VITE_SENTRY_DSN` | Optional Sentry DSN for uncaught errors |
 
 Gemini can also be set at runtime in **Settings** (stored in Capacitor secure storage / localStorage). Android native Firebase config remains in `android/app/google-services.json`.
 
