@@ -11,6 +11,7 @@ import { formatDaysLeft } from '../utils/daysLeftCopy';
 import toast from 'react-hot-toast';
 import { formatMonthSummary } from '../utils/monthSummary';
 import { formatSpendingForecast } from '../utils/spendingForecastCopy';
+import { loadInsightsChartType, persistInsightsChartType } from '../utils/insightsChartType';
 
 interface InsightsProps {
   transactions: Transaction[];
@@ -22,7 +23,12 @@ interface InsightsProps {
 const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedMonth, onMonthChange }) => {
   // Interactive chart state
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [chartType, setChartType] = useState<'pie' | 'bar'>('pie');
+  const [chartType, setChartType] = useState<'pie' | 'bar'>(() => loadInsightsChartType());
+
+  const handleChartTypeChange = (type: 'pie' | 'bar') => {
+    setChartType(type);
+    persistInsightsChartType(type);
+  };
 
   // Parse selected month
   const [year, month] = selectedMonth.split('-').map(Number);
@@ -431,7 +437,7 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
         trendData={trendData}
         chartType={chartType}
         selectedCategory={selectedCategory}
-        onChartTypeChange={setChartType}
+        onChartTypeChange={handleChartTypeChange}
         onCategorySelect={toggleCategory}
       />
 

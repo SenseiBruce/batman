@@ -4,6 +4,7 @@ All notable changes to Jarvis Expense Tracker are documented here.
 
 ## Unreleased
 
+- Insights remembers pie vs bar chart type in localStorage (`jarvis_insights_chart_type`).
 - Restore components that were duplicated during stacked PR merges, and clear the review modal timer on close.
 - Insights Days Left card can copy remaining days in the month.
 - Insights Spending Forecast can copy projected spend, budget, and daily average.
