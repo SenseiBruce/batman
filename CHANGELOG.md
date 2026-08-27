@@ -11,6 +11,7 @@ All notable changes to Jarvis Expense Tracker are documented here.
 - Transactions remembers min/max amount filters across reloads.
 - Transactions can copy the visible (filtered) transaction count.
 - Transactions can copy a filtered spend summary (debits, credits, count).
+- Settings can copy the default cooldown hours.
 - Budget Analysis card can copy a text summary of spend vs budget.
 ## [Unreleased]
 

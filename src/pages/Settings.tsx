@@ -14,6 +14,7 @@ import { ApiKeyModal } from '../components/settings/ApiKeyModal';
 import { PinChangeModal } from '../components/settings/PinChangeModal';
 import { BackupRestorePanel } from '../components/settings/BackupRestorePanel';
 import { formatHourlyWage } from '../utils/hourlyWageCopy';
+import { formatDefaultCooldown } from '../utils/defaultCooldownCopy';
 
 interface SettingsProps {
   onClearTransactions?: () => void;
@@ -165,7 +166,23 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Default Cooldown (Hours)</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-300">Default Cooldown (Hours)</label>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(formatDefaultCooldown(defaultCooldown));
+                    } catch {
+                      /* clipboard may be unavailable */
+                    }
+                  }}
+                  className="text-xs text-orange-400 hover:text-orange-300"
+                  aria-label="Copy default cooldown"
+                >
+                  Copy cooldown
+                </button>
+              </div>
               <input
                 type="number"
                 value={defaultCooldown}
