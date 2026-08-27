@@ -8,6 +8,7 @@ All notable changes to Jarvis Expense Tracker are documented here.
 - Persist the Transactions merchant search query across reloads.
 - Persist the Transactions category filter across reloads.
 - Transactions remembers the From/To date range across reloads.
+- Transactions remembers min/max amount filters across reloads.
 - Budget Analysis card can copy a text summary of spend vs budget.
 ## [Unreleased]
 

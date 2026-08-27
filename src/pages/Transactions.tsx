@@ -19,6 +19,7 @@ import { useCurrency } from '../contexts/CurrencyContext';
 import { loadTxSelectedMonth, persistTxSelectedMonth } from '../utils/txSelectedMonth';
 import { loadTxViewMode, persistTxViewMode } from '../utils/txViewMode';
 import { loadTxDateRange, saveTxDateRange } from '../utils/transactionDateRangeStorage';
+import { loadTxAmountRange, saveTxAmountRange } from '../utils/transactionAmountRangeStorage';
 
 interface TransactionsProps {
   transactions: Transaction[];
@@ -63,12 +64,21 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
       dateTo: range.dateTo,
       amountMin: '',
       amountMax: '',
+    const range = loadTxAmountRange();
+    return {
+      category: '',
+      dateFrom: '',
+      dateTo: '',
+      amountMin: range.amountMin,
+      amountMax: range.amountMax,
     };
   });
 
   useEffect(() => {
     saveTxDateRange({ dateFrom: filters.dateFrom, dateTo: filters.dateTo });
   }, [filters.dateFrom, filters.dateTo]);
+    saveTxAmountRange({ amountMin: filters.amountMin, amountMax: filters.amountMax });
+  }, [filters.amountMin, filters.amountMax]);
 
   // Delete confirmation state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
