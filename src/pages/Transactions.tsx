@@ -20,6 +20,7 @@ import { loadTxSelectedMonth, persistTxSelectedMonth } from '../utils/txSelected
 import { loadTxViewMode, persistTxViewMode } from '../utils/txViewMode';
 import { loadTxDateRange, saveTxDateRange } from '../utils/transactionDateRangeStorage';
 import { loadTxAmountRange, saveTxAmountRange } from '../utils/transactionAmountRangeStorage';
+import { formatVisibleTxCount } from '../utils/visibleTxCount';
 
 interface TransactionsProps {
   transactions: Transaction[];
@@ -345,6 +346,25 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
         <span className="font-medium text-white">
           {new Date(selectedMonth + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
         </span>
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(formatVisibleTxCount(filteredTransactions.length));
+              setToastMessage('Copied visible transaction count');
+              setToastType('success');
+              setToastVisible(true);
+            } catch {
+              setToastMessage('Copy failed');
+              setToastType('error');
+              setToastVisible(true);
+            }
+          }}
+          className="text-xs text-blue-400 hover:text-blue-300 px-2"
+          aria-label="Copy visible transaction count"
+        >
+          Copy count
+        </button>
         <button
           onClick={() => {
             const date = new Date(selectedMonth + '-01');
