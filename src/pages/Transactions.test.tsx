@@ -38,6 +38,8 @@ vi.mock('../services/hapticService', () => ({
     light: vi.fn(),
     error: vi.fn(),
     medium: vi.fn(),
+    heavy: vi.fn(),
+    selectionChanged: vi.fn(),
   },
 }));
 
@@ -69,6 +71,7 @@ describe('Transactions page', () => {
     onBulkAdd.mockReset();
     vi.mocked(checkSmsPermissionsOnly).mockResolvedValue(true);
     vi.mocked(fetchAllSmsTransactions).mockResolvedValue([sampleTx]);
+    vi.mocked(exportToCSV).mockReset();
     vi.mocked(exportToCSV).mockResolvedValue(true);
   });
 
@@ -116,5 +119,34 @@ describe('Transactions page', () => {
     fireEvent.click(screen.getByText('Export'));
     await waitFor(() => expect(exportToCSV).toHaveBeenCalledWith([sampleTx]));
     expect(await screen.findByText('Export successful')).toBeTruthy();
+  });
+
+  it('exports only the currently filtered transactions', async () => {
+    const otherTx: Transaction = {
+      ...sampleTx,
+      id: 't2',
+      merchant: 'Uber',
+      category: 'Transport',
+      amount: 120,
+    };
+    render(
+      <Transactions
+        transactions={[sampleTx, otherTx]}
+        categories={categories}
+        onDelete={vi.fn()}
+        onAdd={vi.fn()}
+        onBulkAdd={onBulkAdd}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('Search by merchant name...'), {
+      target: { value: 'Swiggy' },
+    });
+    await waitFor(() => {
+      expect(screen.queryByText('Uber')).toBeNull();
+    });
+
+    fireEvent.click(screen.getByText('Export'));
+    await waitFor(() => expect(exportToCSV).toHaveBeenCalledWith([sampleTx]));
   });
 });

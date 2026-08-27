@@ -148,21 +148,6 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
     }
   };
 
-  const handleExport = async () => {
-    const success = await exportToCSV(transactions);
-    if (success) {
-      setToastMessage('Export successful');
-      setToastType('success');
-      setToastVisible(true);
-      HapticService.success();
-    } else {
-      setToastMessage('Export failed');
-      setToastType('error');
-      setToastVisible(true);
-      HapticService.error();
-    }
-  };
-
   const handleCategoryChange = (transactionId: string, newCategory: string) => {
     const transaction = transactions.find(t => t.id === transactionId);
     if (transaction && onUpdate) {
@@ -222,6 +207,21 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
     });
     return groups;
   }, [filteredTransactions]);
+
+  const handleExport = async () => {
+    const success = await exportToCSV(filteredTransactions);
+    if (success) {
+      setToastMessage('Export successful');
+      setToastType('success');
+      setToastVisible(true);
+      HapticService.success();
+    } else {
+      setToastMessage('Export failed');
+      setToastType('error');
+      setToastVisible(true);
+      HapticService.error();
+    }
+  };
 
   const handleDeleteClick = (id: string) => {
     setTransactionToDelete(id);
