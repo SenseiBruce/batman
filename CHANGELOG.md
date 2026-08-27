@@ -4,6 +4,7 @@ All notable changes to Jarvis Expense Tracker are documented here.
 
 ## Unreleased
 
+- Insights Days Left card can copy remaining days in the month.
 - Budget Analysis card can copy a text summary of spend vs budget.
 
 ## 1.1.0 - 2026-08-19
