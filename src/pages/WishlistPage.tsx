@@ -4,6 +4,7 @@ import { WishlistItem } from '../types';
 import { Clock, Plus, Check, X, ShieldAlert } from 'lucide-react';
 import { TimeCostDisplay } from '../components/TimeCostDisplay';
 import { SecureStorageService } from '../services/secureStorageService';
+import { formatWishlistSummary } from '../utils/wishlistSummary';
 
 interface WishlistPageProps {
     wishlist: WishlistItem[];
@@ -25,6 +26,7 @@ const WishlistPage: React.FC<WishlistPageProps> = ({ wishlist, onAdd, onUpdate, 
 
     // Hourly Wage (for Time Cost display)
     const [hourlyWage, setHourlyWage] = useState(0);
+    const [copied, setCopied] = useState(false);
 
     // Load wage on mount
     React.useEffect(() => {
@@ -103,12 +105,32 @@ const WishlistPage: React.FC<WishlistPageProps> = ({ wishlist, onAdd, onUpdate, 
                     </h1>
                     <p className="text-gray-400 text-sm">Wait first. Buy later.</p>
                 </div>
+                <div className="flex items-center gap-2">
+                <button
+                    type="button"
+                    onClick={async () => {
+                        try {
+                            await navigator.clipboard.writeText(
+                                formatWishlistSummary(wishlist, (n) => `₹${n}`),
+                            );
+                            setCopied(true);
+                            window.setTimeout(() => setCopied(false), 2000);
+                        } catch {
+                            setCopied(false);
+                        }
+                    }}
+                    className="text-gray-400 text-sm font-medium"
+                    aria-label="Copy wishlist summary"
+                >
+                    {copied ? 'Copied' : 'Copy summary'}
+                </button>
                 <button
                     onClick={() => setIsAddModalOpen(true)}
                     className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg"
                 >
                     <Plus className="w-5 h-5" />
                 </button>
+                </div>
             </header>
 
             <div className="space-y-4">
