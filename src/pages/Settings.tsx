@@ -10,6 +10,7 @@ import { SecureStorageService } from '../services/secureStorageService';
 import { useCurrency, CURRENCIES, CurrencyCode } from '../contexts/CurrencyContext';
 import { Lock, Shield, Key, Bot, Clock, BookOpen, Globe } from 'lucide-react';
 import { log } from '../utils/logger';
+import { formatAboutTagline } from '../utils/aboutTaglineCopy';
 import { ApiKeyModal } from '../components/settings/ApiKeyModal';
 import { PinChangeModal } from '../components/settings/PinChangeModal';
 import { BackupRestorePanel } from '../components/settings/BackupRestorePanel';
@@ -312,6 +313,7 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
               onClick={async () => {
                 try {
                   await navigator.clipboard.writeText(formatAppVersion());
+                  await navigator.clipboard.writeText(formatAboutTagline());
                 } catch {
                   /* clipboard may be unavailable */
                 }
@@ -324,6 +326,13 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
           </div>
           <p className="text-sm text-gray-400">{formatAppVersion()}</p>
           <p className="text-xs text-gray-500 mt-1">Privacy-focused, local-first expense tracking powered by Gemini.</p>
+              aria-label="Copy about tagline"
+            >
+              Copy tagline
+            </button>
+          </div>
+          <p className="text-sm text-gray-400">Jarvis Expense Tracker v1.0</p>
+          <p className="text-xs text-gray-500 mt-1">{formatAboutTagline()}</p>
         </div>
       </div>
 
