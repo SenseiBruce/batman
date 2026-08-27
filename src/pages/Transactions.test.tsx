@@ -160,6 +160,7 @@ describe('Transactions page', () => {
     const { container } = render(
       <Transactions
   it('copies the visible transaction count', async () => {
+  it('copies filtered spend for the visible list', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
@@ -202,5 +203,18 @@ describe('Transactions page', () => {
       expect(writeText).toHaveBeenCalledWith('Visible transactions: 1');
     });
     expect(await screen.findByText('Copied visible transaction count')).toBeTruthy();
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Copy filtered spend' }));
+    const monthLabel = new Date(new Date().toISOString().slice(0, 7) + '-01').toLocaleDateString(
+      'en-US',
+      { month: 'long', year: 'numeric' },
+    );
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        `Filtered spend (${monthLabel}): ₹250 debits · ₹0 credits · 1 transactions`,
+      );
+    });
+    expect(await screen.findByText('Copied filtered spend')).toBeTruthy();
   });
 });

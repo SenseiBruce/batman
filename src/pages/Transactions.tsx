@@ -21,6 +21,7 @@ import { loadTxViewMode, persistTxViewMode } from '../utils/txViewMode';
 import { loadTxDateRange, saveTxDateRange } from '../utils/transactionDateRangeStorage';
 import { loadTxAmountRange, saveTxAmountRange } from '../utils/transactionAmountRangeStorage';
 import { formatVisibleTxCount } from '../utils/visibleTxCount';
+import { formatFilteredSpend } from '../utils/filteredSpend';
 
 interface TransactionsProps {
   transactions: Transaction[];
@@ -352,6 +353,15 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
             try {
               await navigator.clipboard.writeText(formatVisibleTxCount(filteredTransactions.length));
               setToastMessage('Copied visible transaction count');
+            const monthLabel = new Date(selectedMonth + '-01').toLocaleDateString('en-US', {
+              month: 'long',
+              year: 'numeric',
+            });
+            try {
+              await navigator.clipboard.writeText(
+                formatFilteredSpend(filteredTransactions, monthLabel, formatAmount),
+              );
+              setToastMessage('Copied filtered spend');
               setToastType('success');
               setToastVisible(true);
             } catch {
@@ -364,6 +374,9 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
           aria-label="Copy visible transaction count"
         >
           Copy count
+          aria-label="Copy filtered spend"
+        >
+          Copy spend
         </button>
         <button
           onClick={() => {
