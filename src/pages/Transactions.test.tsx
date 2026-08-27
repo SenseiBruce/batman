@@ -73,8 +73,6 @@ describe('Transactions page', () => {
     vi.mocked(checkSmsPermissionsOnly).mockResolvedValue(true);
     vi.mocked(fetchAllSmsTransactions).mockResolvedValue([sampleTx]);
     vi.mocked(exportToCSV).mockReset();
-    vi.mocked(checkSmsPermissionsOnly).mockResolvedValue(true);
-    vi.mocked(fetchAllSmsTransactions).mockResolvedValue([sampleTx]);
     vi.mocked(exportToCSV).mockResolvedValue(true);
   });
 
