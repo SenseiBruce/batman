@@ -11,6 +11,7 @@ import { formatDaysLeft } from '../utils/daysLeftCopy';
 import toast from 'react-hot-toast';
 import { formatMonthSummary } from '../utils/monthSummary';
 import { formatSpendingForecast } from '../utils/spendingForecastCopy';
+import { formatBudgetAlerts } from '../utils/budgetAlertsCopy';
 
 interface InsightsProps {
   transactions: Transaction[];
@@ -237,6 +238,23 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
       {/* Notifications Area */}
       {activeAlerts.length > 0 && (
         <div className="mb-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-yellow-300 font-medium uppercase tracking-wider">Budget alerts</span>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(formatBudgetAlerts(activeAlerts));
+                } catch {
+                  /* clipboard may be unavailable */
+                }
+              }}
+              className="text-xs text-yellow-300 hover:text-yellow-200"
+              aria-label="Copy budget alerts"
+            >
+              Copy alerts
+            </button>
+          </div>
           {activeAlerts.map(c => (
             <Link to="/" key={c.id} className="block">
               <div className={`rounded-xl p-3 border flex items-start gap-3 shadow-sm transition-transform active:scale-95 ${c.percentage >= 100
