@@ -20,6 +20,7 @@ export default defineConfig({
         'src/utils/parser.ts',
         'src/utils/budgetAnalysisSummary.ts',
         'src/utils/localBackupExport.ts',
+        'src/utils/subscriptionSummary.ts',
         'src/contexts/JarvisContext.tsx',
         'src/components/settings/**/*.{ts,tsx}',
       ],

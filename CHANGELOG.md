@@ -22,6 +22,9 @@ All notable changes to Jarvis Expense Tracker are documented here.
 
 - Settings “Download local backup” exports transactions, categories, goals, wishlist, wage, cooldown, and subscriptions as JSON without cloud sign-in
 
+
+- Subscriptions “Copy summary” copies merchants, cadence, next due dates, and estimated monthly cost
+
 ## 1.1.0 - 2026-08-19
 
 ### Added
