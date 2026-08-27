@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Cloud, Download, LogOut, Upload } from 'lucide-react';
+import { Cloud, Download, FileJson, LogOut, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CloudAuthService, User } from '../../services/cloudAuthService';
 import { SyncService } from '../../services/syncService';
+import { backupFilename, collectLocalBackup, downloadJson } from '../../utils/localBackupExport';
 
 export const BackupRestorePanel: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -44,7 +45,11 @@ export const BackupRestorePanel: React.FC = () => {
   };
 
   const handleRestore = async () => {
-    if (!confirm('WARNING: This will overwrite ALL your local data with cloud data. This cannot be undone. Continue?')) {
+    if (
+      !confirm(
+        'WARNING: This will overwrite ALL your local data with cloud data. This cannot be undone. Continue?'
+      )
+    ) {
       return;
     }
     setIsSyncing(true);
@@ -62,6 +67,16 @@ export const BackupRestorePanel: React.FC = () => {
       toast.error(`Restore failed: ${message}`, { id: toastId });
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const handleLocalDownload = async () => {
+    try {
+      const payload = await collectLocalBackup();
+      downloadJson(backupFilename(), payload);
+      toast.success('Local backup downloaded');
+    } catch {
+      toast.error('Could not download backup');
     }
   };
 
@@ -117,6 +132,14 @@ export const BackupRestorePanel: React.FC = () => {
           </button>
         </div>
       )}
+      <button
+        type="button"
+        onClick={handleLocalDownload}
+        className="mt-3 w-full py-2 text-sm text-gray-300 hover:text-white flex items-center justify-center gap-2 border border-gray-700 rounded-lg hover:bg-gray-700/40"
+      >
+        <FileJson className="w-4 h-4" />
+        Download local backup
+      </button>
     </div>
   );
 };

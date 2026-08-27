@@ -25,9 +25,16 @@ vi.mock('react-hot-toast', () => ({
   },
 }));
 
+vi.mock('../../utils/localBackupExport', () => ({
+  collectLocalBackup: vi.fn(async () => ({ exportedAt: '2026-08-24T00:00:00.000Z', data: {} })),
+  backupFilename: () => 'jarvis-backup-2026-08-24.json',
+  downloadJson: vi.fn(),
+}));
+
 import { CloudAuthService } from '../../services/cloudAuthService';
 import { SyncService } from '../../services/syncService';
 import toast from 'react-hot-toast';
+import { collectLocalBackup, downloadJson } from '../../utils/localBackupExport';
 
 const signedInUser = {
   uid: 'u1',
@@ -45,7 +52,7 @@ describe('BackupRestorePanel', () => {
 
   it('backs up after confirm and shows a success toast', async () => {
     render(<BackupRestorePanel />);
-    fireEvent.click(await screen.findByRole('button', { name: /Backup/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Backup$/i }));
     await waitFor(() => expect(SyncService.backupToCloud).toHaveBeenCalled());
     expect(toast.success).toHaveBeenCalled();
   });
@@ -53,8 +60,17 @@ describe('BackupRestorePanel', () => {
   it('does not backup when the user cancels', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(false);
     render(<BackupRestorePanel />);
-    fireEvent.click(await screen.findByRole('button', { name: /Backup/i }));
-    await waitFor(() => expect(screen.getByRole('button', { name: /Backup/i })).toBeTruthy());
+    fireEvent.click(await screen.findByRole('button', { name: /^Backup$/i }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Backup$/i })).toBeTruthy());
     expect(SyncService.backupToCloud).not.toHaveBeenCalled();
+  });
+
+  it('downloads a local JSON backup without requiring cloud sign-in', async () => {
+    vi.mocked(CloudAuthService.getCurrentUser).mockResolvedValue(null);
+    render(<BackupRestorePanel />);
+    fireEvent.click(await screen.findByRole('button', { name: /download local backup/i }));
+    await waitFor(() => expect(collectLocalBackup).toHaveBeenCalled());
+    expect(downloadJson).toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalled();
   });
 });

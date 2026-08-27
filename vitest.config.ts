@@ -19,6 +19,7 @@ export default defineConfig({
         'src/utils/logger.ts',
         'src/utils/parser.ts',
         'src/utils/budgetAnalysisSummary.ts',
+        'src/utils/localBackupExport.ts',
         'src/contexts/JarvisContext.tsx',
         'src/components/settings/**/*.{ts,tsx}',
       ],

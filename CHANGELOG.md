@@ -19,9 +19,13 @@ All notable changes to Jarvis Expense Tracker are documented here.
 
 - Insights "Copy summary" copies a plain-text month report (expenses, budget left, avg/day, MoM, top categories)
 
+
+- Settings “Download local backup” exports transactions, categories, goals, wishlist, wage, cooldown, and subscriptions as JSON without cloud sign-in
+
 ## 1.1.0 - 2026-08-19
 
 ### Added
+
 - Vitest coverage for budget, sync, SMS, Gemini, split, and insight services
 - Component tests for Settings API key, PIN, and backup panels
 - Page tests for Transactions sync/export toasts and Jarvis chat context
@@ -29,6 +33,7 @@ All notable changes to Jarvis Expense Tracker are documented here.
 - GitHub Actions dependency audit, Dependabot, Docker Compose, and a Dev Container
 
 ### Changed
+
 - Firebase web config reads from `VITE_FIREBASE_*` environment variables
 - Settings and Insights pages split into smaller presentational components
 
