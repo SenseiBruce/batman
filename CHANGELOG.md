@@ -27,6 +27,7 @@ All notable changes to Jarvis Expense Tracker are documented here.
 - Savings Goals widget can copy a text summary of progress (saved vs target, completed count).
 - Insights Top Merchants card can copy a ranked spend summary to the clipboard
 - Dashboard AI Predictions card can copy insight/forecast counts to the clipboard
+- Dashboard Jarvis insight card can copy title and message to the clipboard
 
 ## 1.1.0 - 2026-08-19
 
