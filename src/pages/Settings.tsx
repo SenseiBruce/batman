@@ -15,6 +15,7 @@ import { PinChangeModal } from '../components/settings/PinChangeModal';
 import { BackupRestorePanel } from '../components/settings/BackupRestorePanel';
 import { formatHourlyWage } from '../utils/hourlyWageCopy';
 import { formatDefaultCooldown } from '../utils/defaultCooldownCopy';
+import { formatSelectedCurrency } from '../utils/currencyCopy';
 
 interface SettingsProps {
   onClearTransactions?: () => void;
@@ -119,6 +120,23 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
             Regional Settings
           </h3>
           <label className="block text-sm font-medium text-gray-300 mb-2">Currency</label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-gray-300">Currency</label>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(formatSelectedCurrency(currencyCode));
+                } catch {
+                  /* clipboard may be unavailable */
+                }
+              }}
+              className="text-xs text-teal-400 hover:text-teal-300"
+              aria-label="Copy selected currency"
+            >
+              Copy currency
+            </button>
+          </div>
           <select
             value={currencyCode}
             onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
@@ -183,6 +201,7 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
                   Copy cooldown
                 </button>
               </div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Default Cooldown (Hours)</label>
               <input
                 type="number"
                 value={defaultCooldown}
