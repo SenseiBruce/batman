@@ -17,6 +17,7 @@ import { SecureStorageService } from '../services/secureStorageService';
 import { TimeCostDisplay } from '../components/TimeCostDisplay';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { loadTxSelectedMonth, persistTxSelectedMonth } from '../utils/txSelectedMonth';
+import { loadTxViewMode, persistTxViewMode } from '../utils/txViewMode';
 
 interface TransactionsProps {
   transactions: Transaction[];
@@ -33,7 +34,7 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
   const [, setSyncStatus] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(loadTxSelectedMonth);
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>(loadTxViewMode);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [hourlyWage, setHourlyWage] = useState(0);
 
@@ -44,6 +45,8 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
   useEffect(() => {
     persistTxSelectedMonth(selectedMonth);
   }, [selectedMonth]);
+    persistTxViewMode(viewMode);
+  }, [viewMode]);
 
   useEffect(() => {
     SecureStorageService.get<string>('hourly_wage').then(wage => {
