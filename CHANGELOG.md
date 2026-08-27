@@ -12,6 +12,7 @@ All notable changes to Jarvis Expense Tracker are documented here.
 - Transactions can copy the visible (filtered) transaction count.
 - Transactions can copy a filtered spend summary (debits, credits, count).
 - Settings can copy the default cooldown hours.
+- Settings About can copy the app version string.
 - Budget Analysis card can copy a text summary of spend vs budget.
 ## [Unreleased]
 

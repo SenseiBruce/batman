@@ -16,6 +16,7 @@ import { BackupRestorePanel } from '../components/settings/BackupRestorePanel';
 import { formatHourlyWage } from '../utils/hourlyWageCopy';
 import { formatDefaultCooldown } from '../utils/defaultCooldownCopy';
 import { formatSelectedCurrency } from '../utils/currencyCopy';
+import { formatAppVersion } from '../utils/appVersionCopy';
 
 interface SettingsProps {
   onClearTransactions?: () => void;
@@ -304,8 +305,24 @@ const Settings: React.FC<SettingsProps> = ({ onClearTransactions }) => {
         </div>
 
         <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
-          <h3 className="text-white font-semibold mb-2">About</h3>
-          <p className="text-sm text-gray-400">Jarvis Expense Tracker v1.0</p>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-white font-semibold">About</h3>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(formatAppVersion());
+                } catch {
+                  /* clipboard may be unavailable */
+                }
+              }}
+              className="text-xs text-teal-400 hover:text-teal-300"
+              aria-label="Copy app version"
+            >
+              Copy version
+            </button>
+          </div>
+          <p className="text-sm text-gray-400">{formatAppVersion()}</p>
           <p className="text-xs text-gray-500 mt-1">Privacy-focused, local-first expense tracking powered by Gemini.</p>
         </div>
       </div>
