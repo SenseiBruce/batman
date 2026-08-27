@@ -29,6 +29,7 @@ All notable changes to Jarvis Expense Tracker are documented here.
 - Dashboard AI Predictions card can copy insight/forecast counts to the clipboard
 - Dashboard Jarvis insight card can copy title and message to the clipboard
 - Accounts page can copy net worth and account balances as text
+- Persist the dashboard/insights selected month (`YYYY-MM`) in `localStorage` so it survives reloads
 
 ## 1.1.0 - 2026-08-19
 
