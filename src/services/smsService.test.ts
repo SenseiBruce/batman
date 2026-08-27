@@ -3,8 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { preferencesGet, getLearnedCategory } = vi.hoisted(() => ({
   preferencesGet: vi.fn(async () => ({ value: null as string | null })),
   getLearnedCategory: vi.fn(async (_merchant?: string) => null as string | null),
-const { preferencesGet } = vi.hoisted(() => ({
-  preferencesGet: vi.fn(async () => ({ value: null as string | null })),
 }));
 
 vi.mock('@capacitor/preferences', () => ({
@@ -83,9 +81,6 @@ describe('smartCategorize', () => {
 
   it('maps tiny unknown amounts to UPI Transactions', () => {
     expect(smartCategorize('Unknown', 20, 'Rs. 20 sent via UPI', 'Other')).toBe('UPI Transactions');
-    expect(smartCategorize('Unknown', 20, 'Rs. 20 sent via UPI', 'Other')).toBe(
-      'UPI Transactions'
-    );
   });
 
   it('keeps the keyword fallback when no heuristic matches', () => {

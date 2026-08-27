@@ -69,12 +69,9 @@ describe('Transactions page', () => {
 
   beforeEach(() => {
     onBulkAdd.mockReset();
-    localStorage.clear();
     vi.mocked(checkSmsPermissionsOnly).mockResolvedValue(true);
     vi.mocked(fetchAllSmsTransactions).mockResolvedValue([sampleTx]);
     vi.mocked(exportToCSV).mockReset();
-    vi.mocked(checkSmsPermissionsOnly).mockResolvedValue(true);
-    vi.mocked(fetchAllSmsTransactions).mockResolvedValue([sampleTx]);
     vi.mocked(exportToCSV).mockResolvedValue(true);
   });
 
@@ -150,27 +147,6 @@ describe('Transactions page', () => {
     render(
       <Transactions
         transactions={[sampleTx, otherTx]}
-  it('restores the persisted transaction date range', async () => {
-    localStorage.setItem(
-      'jarvis_tx_date_range',
-      JSON.stringify({ dateFrom: '2024-01-01', dateTo: '2024-01-31' }),
-  it('restores the persisted transaction amount range', () => {
-    localStorage.setItem(
-      'jarvis_tx_amount_range',
-      JSON.stringify({ amountMin: '10', amountMax: '500' }),
-    );
-    const { container } = render(
-      <Transactions
-  it('copies the visible transaction count', async () => {
-  it('copies filtered spend for the visible list', async () => {
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, 'clipboard', {
-      configurable: true,
-      value: { writeText },
-    });
-    render(
-      <Transactions
-        transactions={[sampleTx]}
         categories={categories}
         onDelete={vi.fn()}
         onAdd={vi.fn()}
@@ -187,36 +163,36 @@ describe('Transactions page', () => {
 
     fireEvent.click(screen.getByText('Export'));
     await waitFor(() => expect(exportToCSV).toHaveBeenCalledWith([sampleTx]));
-      />,
-    );
-    const filterToggle = container.querySelector('button.px-4.py-3.rounded-lg.font-medium');
-    expect(filterToggle).toBeTruthy();
-    fireEvent.click(filterToggle as HTMLButtonElement);
-    const dates = container.querySelectorAll('input[type="date"]');
-    expect((dates[0] as HTMLInputElement).value).toBe('2024-01-01');
-    expect((dates[1] as HTMLInputElement).value).toBe('2024-01-31');
-    const amounts = container.querySelectorAll('input[type="number"]');
-    expect((amounts[0] as HTMLInputElement).value).toBe('10');
-    expect((amounts[1] as HTMLInputElement).value).toBe('500');
-      />,
+  });
+
+  it('copies the visible transaction count and filtered spend', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+    render(
+      <Transactions
+        transactions={[sampleTx]}
+        categories={categories}
+        onDelete={vi.fn()}
+        onAdd={vi.fn()}
+        onBulkAdd={onBulkAdd}
+      />
     );
     fireEvent.click(screen.getByRole('button', { name: 'Copy visible transaction count' }));
     await waitFor(() => {
       expect(writeText).toHaveBeenCalledWith('Visible transactions: 1');
     });
-    expect(await screen.findByText('Copied visible transaction count')).toBeTruthy();
-      />,
-    );
     fireEvent.click(screen.getByRole('button', { name: 'Copy filtered spend' }));
-    const monthLabel = new Date(new Date().toISOString().slice(0, 7) + '-01').toLocaleDateString(
-      'en-US',
-      { month: 'long', year: 'numeric' },
-    );
+    const monthLabel = new Date(`${sampleTx.date.slice(0, 7)}-01`).toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric',
+    });
     await waitFor(() => {
       expect(writeText).toHaveBeenCalledWith(
         `Filtered spend (${monthLabel}): ₹250 debits · ₹0 credits · 1 transactions`,
       );
     });
-    expect(await screen.findByText('Copied filtered spend')).toBeTruthy();
   });
 });

@@ -4,6 +4,7 @@ All notable changes to Jarvis Expense Tracker are documented here.
 
 ## Unreleased
 
+- Restore components that were duplicated during stacked PR merges, and clear the review modal timer on close.
 - Insights Days Left card can copy remaining days in the month.
 - Persist the Transactions merchant search query across reloads.
 - Persist the Transactions category filter across reloads.

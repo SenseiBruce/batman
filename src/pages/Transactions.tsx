@@ -29,7 +29,6 @@ interface TransactionsProps {
   onDelete: (id: string) => void;
   onAdd: (t: Transaction) => void;
   onBulkAdd: (txs: Transaction[]) => BulkAddResult | void;
-  onBulkAdd: (txs: Transaction[]) => void;
   onUpdate?: (tx: Transaction) => void;
 }
 
@@ -40,9 +39,6 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
   const [selectedMonth, setSelectedMonth] = useState(loadTxSelectedMonth);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>(loadTxViewMode);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
-  const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [hourlyWage, setHourlyWage] = useState(0);
 
@@ -53,6 +49,8 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
   useEffect(() => {
     persistTxSelectedMonth(selectedMonth);
   }, [selectedMonth]);
+
+  useEffect(() => {
     persistTxViewMode(viewMode);
   }, [viewMode]);
 
@@ -63,36 +61,24 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
   }, []);
 
   const [filters, setFilters] = useState<FilterState>(() => {
-    const range = loadTxDateRange();
+    const dates = loadTxDateRange();
+    const amounts = loadTxAmountRange();
     return {
       category: '',
-      dateFrom: range.dateFrom,
-      dateTo: range.dateTo,
-      amountMin: '',
-      amountMax: '',
-    const range = loadTxAmountRange();
-    return {
-      category: '',
-      dateFrom: '',
-      dateTo: '',
-      amountMin: range.amountMin,
-      amountMax: range.amountMax,
+      dateFrom: dates.dateFrom,
+      dateTo: dates.dateTo,
+      amountMin: amounts.amountMin,
+      amountMax: amounts.amountMax,
     };
   });
 
   useEffect(() => {
     saveTxDateRange({ dateFrom: filters.dateFrom, dateTo: filters.dateTo });
   }, [filters.dateFrom, filters.dateTo]);
+
+  useEffect(() => {
     saveTxAmountRange({ amountMin: filters.amountMin, amountMax: filters.amountMax });
   }, [filters.amountMin, filters.amountMax]);
-
-  const [filters, setFilters] = useState<FilterState>({
-    category: '',
-    dateFrom: '',
-    dateTo: '',
-    amountMin: '',
-    amountMax: ''
-  });
 
   // Delete confirmation state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -138,12 +124,6 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
           setToastVisible(true);
           HapticService.success();
         }
-        onBulkAdd(newTxs);
-        setSyncStatus(`Synced ${newTxs.length} new transactions`);
-        setToastMessage(`Synced ${newTxs.length} new transactions`);
-        setToastType('success');
-        setToastVisible(true);
-        HapticService.success();
       } else {
         setSyncStatus('No new transactions found');
         HapticService.light();
@@ -193,12 +173,6 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
           setToastVisible(true);
           HapticService.success();
         }
-        onBulkAdd(newTxs);
-        setSyncStatus(`Imported ${newTxs.length} transactions`);
-        setToastMessage(`Imported ${newTxs.length} transactions`);
-        setToastType('success');
-        setToastVisible(true);
-        HapticService.success();
       } else {
         setSyncStatus('No transactions found in file');
         HapticService.light();
@@ -218,21 +192,6 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
           fileInputRef.current.value = '';
         }
       }, 2000);
-    }
-  };
-
-  const handleExport = async () => {
-    const success = await exportToCSV(transactions);
-    if (success) {
-      setToastMessage('Export successful');
-      setToastType('success');
-      setToastVisible(true);
-      HapticService.success();
-    } else {
-      setToastMessage('Export failed');
-      setToastType('error');
-      setToastVisible(true);
-      HapticService.error();
     }
   };
 
@@ -388,10 +347,26 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
         </span>
         <button
           type="button"
+          aria-label="Copy visible transaction count"
+          className="text-xs text-gray-300 hover:text-white"
           onClick={async () => {
             try {
               await navigator.clipboard.writeText(formatVisibleTxCount(filteredTransactions.length));
               setToastMessage('Copied visible transaction count');
+              setToastType('success');
+              setToastVisible(true);
+            } catch {
+              /* clipboard may be unavailable */
+            }
+          }}
+        >
+          Copy count
+        </button>
+        <button
+          type="button"
+          aria-label="Copy filtered spend"
+          className="text-xs text-gray-300 hover:text-white"
+          onClick={async () => {
             const monthLabel = new Date(selectedMonth + '-01').toLocaleDateString('en-US', {
               month: 'long',
               year: 'numeric',
@@ -404,16 +379,9 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, categories, o
               setToastType('success');
               setToastVisible(true);
             } catch {
-              setToastMessage('Copy failed');
-              setToastType('error');
-              setToastVisible(true);
+              /* clipboard may be unavailable */
             }
           }}
-          className="text-xs text-blue-400 hover:text-blue-300 px-2"
-          aria-label="Copy visible transaction count"
-        >
-          Copy count
-          aria-label="Copy filtered spend"
         >
           Copy spend
         </button>

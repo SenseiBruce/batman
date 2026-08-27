@@ -4,10 +4,6 @@ import toast from 'react-hot-toast';
 import { CloudAuthService, User } from '../../services/cloudAuthService';
 import { SyncService } from '../../services/syncService';
 import { backupFilename, collectLocalBackup, downloadJson } from '../../utils/localBackupExport';
-import { Cloud, Download, LogOut, Upload } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { CloudAuthService, User } from '../../services/cloudAuthService';
-import { SyncService } from '../../services/syncService';
 
 export const BackupRestorePanel: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -54,7 +50,6 @@ export const BackupRestorePanel: React.FC = () => {
         'WARNING: This will overwrite ALL your local data with cloud data. This cannot be undone. Continue?'
       )
     ) {
-    if (!confirm('WARNING: This will overwrite ALL your local data with cloud data. This cannot be undone. Continue?')) {
       return;
     }
     setIsSyncing(true);
