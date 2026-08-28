@@ -8,6 +8,10 @@ import {
     loadCustomReportsDateRange,
     persistCustomReportsDateRange,
 } from '../utils/customReportsDateRange';
+import {
+    loadCustomReportsChartType,
+    persistCustomReportsChartType,
+} from '../utils/customReportsChartType';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
@@ -31,12 +35,16 @@ const CustomReports: React.FC<CustomReportsProps> = ({ transactions, categories,
     const [startDate, setStartDate] = useState<string>(() => loadCustomReportsDateRange().startDate);
     const [endDate, setEndDate] = useState<string>(() => loadCustomReportsDateRange().endDate);
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-    const [chartType, setChartType] = useState<ChartType>('bar');
+    const [chartType, setChartType] = useState<ChartType>(loadCustomReportsChartType);
     const [groupBy, setGroupBy] = useState<GroupBy>(loadCustomReportsGroupBy);
 
     useEffect(() => {
         persistCustomReportsGroupBy(groupBy);
     }, [groupBy]);
+
+    useEffect(() => {
+        persistCustomReportsChartType(chartType);
+    }, [chartType]);
 
     useEffect(() => {
         persistCustomReportsDateRange({ startDate, endDate });
