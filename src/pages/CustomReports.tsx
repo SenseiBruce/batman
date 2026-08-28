@@ -1,5 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Transaction, Category } from '../types';
+import {
+    loadCustomReportsGroupBy,
+    persistCustomReportsGroupBy,
+} from '../utils/customReportsGroupBy';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
@@ -26,7 +30,11 @@ const CustomReports: React.FC<CustomReportsProps> = ({ transactions, categories,
     const [endDate, setEndDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [chartType, setChartType] = useState<ChartType>('bar');
-    const [groupBy, setGroupBy] = useState<GroupBy>('day');
+    const [groupBy, setGroupBy] = useState<GroupBy>(loadCustomReportsGroupBy);
+
+    useEffect(() => {
+        persistCustomReportsGroupBy(groupBy);
+    }, [groupBy]);
     const [showTable, setShowTable] = useState(true);
     const [isDownloading, setIsDownloading] = useState(false);
     const [showExportModal, setShowExportModal] = useState(false);
