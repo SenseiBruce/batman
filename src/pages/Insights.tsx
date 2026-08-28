@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Transaction, Category } from '../types';
 import { Link } from 'react-router-dom';
 import TopMerchants from '../components/TopMerchants';
@@ -11,6 +11,10 @@ import { formatDaysLeft } from '../utils/daysLeftCopy';
 import toast from 'react-hot-toast';
 import { formatMonthSummary } from '../utils/monthSummary';
 import { formatSpendingForecast } from '../utils/spendingForecastCopy';
+import {
+  loadInsightsSelectedCategory,
+  persistInsightsSelectedCategory,
+} from '../utils/insightsSelectedCategory';
 
 interface InsightsProps {
   transactions: Transaction[];
@@ -21,8 +25,14 @@ interface InsightsProps {
 
 const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedMonth, onMonthChange }) => {
   // Interactive chart state
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    () => loadInsightsSelectedCategory(),
+  );
   const [chartType, setChartType] = useState<'pie' | 'bar'>('pie');
+
+  useEffect(() => {
+    persistInsightsSelectedCategory(selectedCategory);
+  }, [selectedCategory]);
 
   // Parse selected month
   const [year, month] = selectedMonth.split('-').map(Number);
