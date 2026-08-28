@@ -15,6 +15,10 @@ import {
   loadInsightsSelectedCategory,
   persistInsightsSelectedCategory,
 } from '../utils/insightsSelectedCategory';
+import {
+  loadInsightsChartType,
+  persistInsightsChartType,
+} from '../utils/insightsChartType';
 
 interface InsightsProps {
   transactions: Transaction[];
@@ -28,11 +32,17 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     () => loadInsightsSelectedCategory(),
   );
-  const [chartType, setChartType] = useState<'pie' | 'bar'>('pie');
+  const [chartType, setChartType] = useState<'pie' | 'bar'>(
+    () => loadInsightsChartType(),
+  );
 
   useEffect(() => {
     persistInsightsSelectedCategory(selectedCategory);
   }, [selectedCategory]);
+
+  useEffect(() => {
+    persistInsightsChartType(chartType);
+  }, [chartType]);
 
   // Parse selected month
   const [year, month] = selectedMonth.split('-').map(Number);
