@@ -4,6 +4,10 @@ import {
     loadCustomReportsGroupBy,
     persistCustomReportsGroupBy,
 } from '../utils/customReportsGroupBy';
+import {
+    loadCustomReportsDateRange,
+    persistCustomReportsDateRange,
+} from '../utils/customReportsDateRange';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
@@ -24,10 +28,8 @@ const CHART_COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#0
 const CustomReports: React.FC<CustomReportsProps> = ({ transactions, categories, onBack }) => {
     const reportRef = useRef<HTMLDivElement>(null);
 
-    const [startDate, setStartDate] = useState<string>(
-        new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0]
-    );
-    const [endDate, setEndDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [startDate, setStartDate] = useState<string>(() => loadCustomReportsDateRange().startDate);
+    const [endDate, setEndDate] = useState<string>(() => loadCustomReportsDateRange().endDate);
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [chartType, setChartType] = useState<ChartType>('bar');
     const [groupBy, setGroupBy] = useState<GroupBy>(loadCustomReportsGroupBy);
@@ -35,6 +37,10 @@ const CustomReports: React.FC<CustomReportsProps> = ({ transactions, categories,
     useEffect(() => {
         persistCustomReportsGroupBy(groupBy);
     }, [groupBy]);
+
+    useEffect(() => {
+        persistCustomReportsDateRange({ startDate, endDate });
+    }, [startDate, endDate]);
     const [showTable, setShowTable] = useState(true);
     const [isDownloading, setIsDownloading] = useState(false);
     const [showExportModal, setShowExportModal] = useState(false);
