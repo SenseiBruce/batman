@@ -13,6 +13,7 @@ import {
   YAxis,
 } from 'recharts';
 import { HapticService } from '../../services/hapticService';
+import { formatInsightsChartType } from '../../utils/insightsChartTypeCopy';
 
 export interface CategorySlice {
   name: string;
@@ -52,7 +53,21 @@ export const SpendingCharts: React.FC<SpendingChartsProps> = ({
       <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-white font-semibold">Spending by Category</h3>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(formatInsightsChartType(chartType));
+                } catch {
+                  /* clipboard may be unavailable */
+                }
+              }}
+              className="text-xs text-indigo-300 hover:text-indigo-200"
+              aria-label="Copy insights chart type"
+            >
+              Copy chart
+            </button>
             <button
               onClick={() => {
                 HapticService.light();
