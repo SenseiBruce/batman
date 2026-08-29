@@ -10,6 +10,7 @@ import { SpendingCharts } from '../components/insights/SpendingCharts';
 import { formatDaysLeft } from '../utils/daysLeftCopy';
 import { formatAvgDaily } from '../utils/avgDailyCopy';
 import { formatExpenses } from '../utils/expensesCopy';
+import { formatBudgetLeft } from '../utils/budgetLeftCopy';
 import toast from 'react-hot-toast';
 import { formatMonthSummary } from '../utils/monthSummary';
 import { formatSpendingForecast } from '../utils/spendingForecastCopy';
@@ -346,9 +347,25 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
 
         {/* Budget Remaining */}
         <div className="bg-gradient-to-br from-blue-900/40 to-blue-800/20 rounded-xl p-4 border border-blue-700/30">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
             <span className="text-xs text-blue-300 font-medium">Budget Left</span>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(formatBudgetLeft(budgetLeft));
+                } catch {
+                  /* clipboard may be unavailable */
+                }
+              }}
+              className="text-xs text-blue-300 hover:text-blue-200"
+              aria-label="Copy budget left"
+            >
+              Copy budget left
+            </button>
           </div>
           <p className="text-2xl font-bold text-white">
             <AnimatedNumber value={budgetLeft} prefix="₹" duration={1200} delay={100} />
