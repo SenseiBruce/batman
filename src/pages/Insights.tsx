@@ -8,6 +8,7 @@ import { HapticService } from '../services/hapticService';
 import { MonthComparison } from '../components/insights/MonthComparison';
 import { SpendingCharts } from '../components/insights/SpendingCharts';
 import { formatDaysLeft } from '../utils/daysLeftCopy';
+import { formatAvgDaily } from '../utils/avgDailyCopy';
 import toast from 'react-hot-toast';
 import { formatMonthSummary } from '../utils/monthSummary';
 import { formatSpendingForecast } from '../utils/spendingForecastCopy';
@@ -342,9 +343,25 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
 
         {/* Average Daily Spending */}
         <div className="bg-gradient-to-br from-purple-900/40 to-purple-800/20 rounded-xl p-4 border border-purple-700/30">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
             <span className="text-xs text-purple-300 font-medium">Avg/Day</span>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(formatAvgDaily(avgDailySpending));
+                } catch {
+                  /* clipboard may be unavailable */
+                }
+              }}
+              className="text-xs text-purple-300 hover:text-purple-200"
+              aria-label="Copy average daily spending"
+            >
+              Copy avg/day
+            </button>
           </div>
           <p className="text-2xl font-bold text-white">
             <AnimatedNumber value={avgDailySpending} prefix="₹" duration={1200} delay={200} />
