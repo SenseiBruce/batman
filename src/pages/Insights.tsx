@@ -9,6 +9,7 @@ import { MonthComparison } from '../components/insights/MonthComparison';
 import { SpendingCharts } from '../components/insights/SpendingCharts';
 import { formatDaysLeft } from '../utils/daysLeftCopy';
 import { formatRemainingDaily } from '../utils/remainingDailyCopy';
+import { formatInsightsMonth } from '../utils/insightsMonthCopy';
 import { formatAvgDaily } from '../utils/avgDailyCopy';
 import { formatExpenses } from '../utils/expensesCopy';
 import { formatBudgetLeft } from '../utils/budgetLeftCopy';
@@ -216,8 +217,24 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
           >
             <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </button>
-          <span className="font-medium text-white">
-            {new Date(selectedMonth + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+          <span className="flex items-center gap-2">
+            <span className="font-medium text-white">
+              {new Date(selectedMonth + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            </span>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(formatInsightsMonth(selectedMonth));
+                } catch {
+                  /* clipboard may be unavailable */
+                }
+              }}
+              className="text-xs text-indigo-300 hover:text-indigo-200"
+              aria-label="Copy insights month"
+            >
+              Copy month
+            </button>
           </span>
           <button
             onClick={() => {
