@@ -8,6 +8,7 @@ import { HapticService } from '../services/hapticService';
 import { MonthComparison } from '../components/insights/MonthComparison';
 import { SpendingCharts } from '../components/insights/SpendingCharts';
 import { formatDaysLeft } from '../utils/daysLeftCopy';
+import { formatRemainingDaily } from '../utils/remainingDailyCopy';
 import { formatAvgDaily } from '../utils/avgDailyCopy';
 import { formatExpenses } from '../utils/expensesCopy';
 import { formatBudgetLeft } from '../utils/budgetLeftCopy';
@@ -464,9 +465,25 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
             <AnimatedNumber value={daysLeft > 0 ? daysLeft : daysInMonth} duration={800} delay={300} />
           </p>
           {daysLeft > 0 && budgetLeft > 0 && (
-            <p className="text-xs mt-1 text-gray-400">
+            <div className="flex items-center justify-between mt-1">
+            <p className="text-xs text-gray-400">
               <AnimatedNumber value={budgetLeft / daysLeft} prefix="₹" duration={1000} delay={300} />/day left
             </p>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(formatRemainingDaily(budgetLeft, daysLeft));
+                  } catch {
+                    /* clipboard may be unavailable */
+                  }
+                }}
+                className="text-xs text-orange-300 hover:text-orange-200"
+                aria-label="Copy remaining daily budget"
+              >
+                Copy daily left
+              </button>
+            </div>
           )}
         </div>
       </div>
