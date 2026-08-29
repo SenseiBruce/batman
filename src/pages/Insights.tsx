@@ -11,6 +11,7 @@ import { formatDaysLeft } from '../utils/daysLeftCopy';
 import { formatAvgDaily } from '../utils/avgDailyCopy';
 import { formatExpenses } from '../utils/expensesCopy';
 import { formatBudgetLeft } from '../utils/budgetLeftCopy';
+import { formatBudgetUsed } from '../utils/budgetUsedCopy';
 import toast from 'react-hot-toast';
 import { formatMonthSummary } from '../utils/monthSummary';
 import { formatSpendingForecast } from '../utils/spendingForecastCopy';
@@ -370,9 +371,25 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
           <p className="text-2xl font-bold text-white">
             <AnimatedNumber value={budgetLeft} prefix="₹" duration={1200} delay={100} />
           </p>
-          <p className="text-xs mt-1 text-gray-400">
+          <div className="flex items-center justify-between mt-1">
+          <p className="text-xs text-gray-400">
             <AnimatedNumber value={budgetProgress} decimals={0} duration={1000} delay={100} />% used
           </p>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(formatBudgetUsed(budgetProgress));
+                } catch {
+                  /* clipboard may be unavailable */
+                }
+              }}
+              className="text-xs text-blue-300 hover:text-blue-200"
+              aria-label="Copy budget used"
+            >
+              Copy used
+            </button>
+          </div>
         </div>
 
         {/* Average Daily Spending */}
