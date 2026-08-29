@@ -12,6 +12,7 @@ import { formatAvgDaily } from '../utils/avgDailyCopy';
 import { formatExpenses } from '../utils/expensesCopy';
 import { formatBudgetLeft } from '../utils/budgetLeftCopy';
 import { formatBudgetUsed } from '../utils/budgetUsedCopy';
+import { formatExpenseChange } from '../utils/expenseChangeCopy';
 import toast from 'react-hot-toast';
 import { formatMonthSummary } from '../utils/monthSummary';
 import { formatSpendingForecast } from '../utils/spendingForecastCopy';
@@ -335,9 +336,27 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
             <AnimatedNumber value={totalExpenses} prefix="₹" duration={1200} />
           </p>
           {!selectedCategory && prevTotalExpenses > 0 && (
-            <p className={`text-xs mt-1 ${expenseChange > 0 ? 'text-red-400' : 'text-green-400'}`}>
+            <div className="flex items-center justify-between mt-1">
+            <p className={`text-xs ${expenseChange > 0 ? 'text-red-400' : 'text-green-400'}`}>
               {expenseChange > 0 ? '↑' : '↓'} <AnimatedNumber value={Math.abs(expenseChange)} decimals={1} duration={1000} />% vs last month
             </p>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(
+                      formatExpenseChange(expenseChange, prevTotalExpenses > 0),
+                    );
+                  } catch {
+                    /* clipboard may be unavailable */
+                  }
+                }}
+                className="text-xs text-red-300 hover:text-red-200"
+                aria-label="Copy expense change"
+              >
+                Copy change
+              </button>
+            </div>
           )}
           {selectedCategory && (
             <p className="text-xs mt-1 text-gray-400">
