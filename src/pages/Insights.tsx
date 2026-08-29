@@ -9,6 +9,7 @@ import { MonthComparison } from '../components/insights/MonthComparison';
 import { SpendingCharts } from '../components/insights/SpendingCharts';
 import { formatDaysLeft } from '../utils/daysLeftCopy';
 import { formatAvgDaily } from '../utils/avgDailyCopy';
+import { formatExpenses } from '../utils/expensesCopy';
 import toast from 'react-hot-toast';
 import { formatMonthSummary } from '../utils/monthSummary';
 import { formatSpendingForecast } from '../utils/spendingForecastCopy';
@@ -308,9 +309,25 @@ const Insights: React.FC<InsightsProps> = ({ transactions, categories, selectedM
       <div className="grid grid-cols-2 gap-3 mb-6">
         {/* Total Expenses */}
         <div className="bg-gradient-to-br from-red-900/40 to-red-800/20 rounded-xl p-4 border border-red-700/30">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
             <span className="text-xs text-red-300 font-medium">Expenses</span>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(formatExpenses(totalExpenses));
+                } catch {
+                  /* clipboard may be unavailable */
+                }
+              }}
+              className="text-xs text-red-300 hover:text-red-200"
+              aria-label="Copy expenses"
+            >
+              Copy expenses
+            </button>
           </div>
           <p className="text-2xl font-bold text-white">
             <AnimatedNumber value={totalExpenses} prefix="₹" duration={1200} />
